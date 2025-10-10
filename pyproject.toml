@@ -6,27 +6,37 @@ description = "Inspect and modify video/audio/subtitle tracks using FFmpeg."
 readme = "README.md"
 authors = [{name = "Philipp Meder", email = "148459685+PhilippMeder@users.noreply.github.com"}]
 maintainers = [{name = "Philipp Meder", email = "148459685+PhilippMeder@users.noreply.github.com"}]
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = []
+keywords = ["media", "video", "inspect", "mux", "audio tracks", "cli"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 
 [project.urls]
-Changelog = "https://github.com/PhilippMeder/REPOSITORYNAME/commits"
-Documentation = "https://github.com/PhilippMeder/REPOSITORYNAME/README.md"
-Download = "https://github.com/PhilippMeder/REPOSITORYNAME"
-Homepage = "https://github.com/PhilippMeder/REPOSITORYNAME"
-Issues = "https://github.com/PhilippMeder/REPOSITORYNAME/issues"
-Releasenotes = "https://github.com/PhilippMeder/REPOSITORYNAME/commits"
-Source = "https://github.com/PhilippMeder/REPOSITORYNAME.git"
+Changelog = "https://github.com/PhilippMeder/vidmux/commits"
+Documentation = "https://github.com/PhilippMeder/vidmux/README.md"
+Download = "https://github.com/PhilippMeder/vidmux"
+Homepage = "https://github.com/PhilippMeder/vidmux"
+Issues = "https://github.com/PhilippMeder/vidmux/issues"
+Releasenotes = "https://github.com/PhilippMeder/vidmux/commits"
+Source = "https://github.com/PhilippMeder/vidmux.git"
 
 [project.scripts]
 vidmux = "vidmux.__main__:main"
 
 [project.optional-dependencies]
-full = [
-    "pytest",
-    "ruff",
-]
+dev = ["pytest", "ruff"]
+
+[tool.vidmux]
+system-dependencies = ["ffmpeg>=4.0"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "N"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
