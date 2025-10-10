@@ -5,8 +5,72 @@ from pathlib import Path
 
 import vidmux.srt_tools as srt_tools
 from vidmux.language_tools import set_languages
+from vidmux.mux_audio_tracks import mux_audio_tracks
 from vidmux.video_inspection import get_video_resolution
 from vidmux.video_library_scan import scan_mode
+
+
+def get_mux_audio_tracks_parser(
+    subparsers: argparse._SubParsersAction | None = None,
+    prog: str | None = None,
+    formatter_class: type | None = None,
+) -> argparse.ArgumentParser:
+    """
+    Create and configure the argument parser for 'mux-audio-tracks'.
+
+    This function can either add a subparser to an existing ArgumentParser
+    (via `subparsers`) or create a standalone parser when called independently.
+    Useful for modular CLI designs.
+
+    Parameters
+    ----------
+    subparsers : argparse._SubParsersAction, optional
+        Subparsers object from the main parser to which this parser should be added.
+        If None, a standalone ArgumentParser is created instead.
+    prog : str, optional
+        The program name used in standalone mode. Ignored if `subparsers` is provided.
+    formatter_class : type, optional
+        The formatter class to be used for argument help formatting. Defaults to
+        argparse.ArgumentDefaultsHelpFormatter.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        The configured argument parser (necessary esp. for standalone mode).
+    """
+    parser_options = {
+        "description": "Mux multiple audio tracks into one video file using FFmpeg.",
+        "formatter_class": formatter_class or argparse.ArgumentDefaultsHelpFormatter,
+    }
+
+    if subparsers:
+        parser = subparsers.add_parser(
+            "mux-audio-tracks", help=parser_options["description"], **parser_options
+        )
+    else:
+        parser = argparse.ArgumentParser(prog=prog, **parser_options)
+
+    parser.add_argument(
+        "output",
+        type=Path,
+        help="Output file (e.g. output.mp4)",
+    )
+
+    parser.add_argument(
+        "inputs",
+        nargs="+",
+        help=(
+            "Pairs or triplets of inputs: input_file lang [title]. "
+            "Example: video_en.mp4 eng 'English Audio' video_de.mp4 deu 'Deutsch'"
+        ),
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only print ffmpeg command without executing.",
+    )
+
+    return parser
 
 
 def get_resolution_parser(
@@ -280,6 +344,7 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="feature")
 
     feature_parsers = (
+        get_mux_audio_tracks_parser,
         get_resolution_parser,
         get_scan_library_parser,
         get_set_language_parser,
@@ -290,6 +355,8 @@ def main() -> None:
 
     args = parser.parse_args()
     match args.feature:
+        case "mux-audio-tracks":
+            mux_audio_tracks(args.output, args.inputs, dry_run=args.dry_run)
         case "resolution":
             resolution = get_video_resolution(args.path_or_url)
             print(f"Video resolution of '{args.path_or_url}':\n{resolution}")
