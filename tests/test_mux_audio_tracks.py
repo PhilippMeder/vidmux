@@ -89,6 +89,68 @@ def test_mux_command(tmp_path: Path) -> None:
     mock_run.assert_called_once_with(expected_args, check=True)
 
 
+def test_mux_command_with_fixture(tmp_path: Path, ffmpeg_mock) -> None:
+    """Test whether the mux command is constructed correctly without running ffmpeg."""
+    outfile = tmp_path / "outfile.mp4"
+
+    infile_1 = tmp_path / "video_1.mp4"
+    infile_2 = tmp_path / "video_2.mp4"
+    infile_3 = tmp_path / "video_3.mp4"
+
+    # Create empty dummy input files
+    for file in (infile_1, infile_2, infile_3):
+        file.touch()
+
+    mux_audio_tracks(
+        outfile,
+        [
+            infile_1,
+            "deu",
+            infile_2,
+            "deu",
+            "Deutscher Kommentar",
+            infile_3,
+            "eng",
+        ],
+    )
+
+    # Define expected ffmpeg arguments
+    expected_args = [
+        "ffmpeg",
+        "-i",
+        str(infile_1),
+        "-i",
+        str(infile_2),
+        "-i",
+        str(infile_3),
+        # mapping: first input has video+audio, others only audio
+        "-map",
+        "0:v:0",
+        "-map",
+        "0:a:0",
+        "-map",
+        "1:a:0",
+        "-map",
+        "2:a:0",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "copy",
+        # metadata
+        "-metadata:s:a:0",
+        "language=deu",
+        "-metadata:s:a:1",
+        "language=deu",
+        "-metadata:s:a:1",
+        "title=Deutscher Kommentar",
+        "-metadata:s:a:2",
+        "language=eng",
+        str(outfile),
+    ]
+
+    ffmpeg_mock.assert_called_with(expected_args)
+
+
 @pytest.mark.parametrize(
     "inputs",
     [
