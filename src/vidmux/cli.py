@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 import vidmux.srt_tools as srt_tools
+from vidmux.language_tools import set_languages
 from vidmux.video_library_scan import scan_mode
 
 
@@ -69,6 +70,82 @@ def get_scan_library_parser(
     )
     parser.add_argument(
         "--csv", metavar="FILE", type=Path, help="Path to output CSV file."
+    )
+
+    return parser
+
+
+def get_set_language_parser(
+    subparsers: argparse._SubParsersAction | None = None,
+    prog: str | None = None,
+    formatter_class: type | None = None,
+) -> argparse.ArgumentParser:
+    """
+    Create and configure the argument parser for 'set-language'.
+
+    This function can either add a subparser to an existing ArgumentParser
+    (via `subparsers`) or create a standalone parser when called independently.
+    Useful for modular CLI designs.
+
+    Parameters
+    ----------
+    subparsers : argparse._SubParsersAction, optional
+        Subparsers object from the main parser to which this parser should be added.
+        If None, a standalone ArgumentParser is created instead.
+    prog : str, optional
+        The program name used in standalone mode. Ignored if `subparsers` is provided.
+    formatter_class : type, optional
+        The formatter class to be used for argument help formatting. Defaults to
+        argparse.ArgumentDefaultsHelpFormatter.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        The configured argument parser (necessary esp. for standalone mode).
+    """
+    parser_options = {
+        "description": "Set audio and subtitle language metadata.",
+        "formatter_class": formatter_class or argparse.ArgumentDefaultsHelpFormatter,
+    }
+    if subparsers:
+        parser = subparsers.add_parser(
+            "set-language", help=parser_options["description"], **parser_options
+        )
+    else:
+        parser = argparse.ArgumentParser(prog=prog, **parser_options)
+
+    parser.add_argument("input_file", type=Path, help="Input video file.")
+    parser.add_argument("output_file", type=Path, help="Output video file.")
+    parser.add_argument(
+        "--audio-lang",
+        metavar="LANGUAGE",
+        nargs="+",
+        required=True,
+        help="Audio languages (e.g., deu eng).",
+    )
+    parser.add_argument(
+        "--subtitle-lang",
+        metavar="LANGUAGE",
+        nargs="*",
+        default=[],
+        help="Subtitle languages (optional).",
+    )
+    parser.add_argument(
+        "--audio-title",
+        metavar="TITLE",
+        nargs="*",
+        help="Optional titles for audio tracks.",
+    )
+    parser.add_argument(
+        "--subtitle-title",
+        metavar="TITLE",
+        nargs="*",
+        help="Optional titles for subtitle tracks.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only print ffmpeg command without executing.",
     )
 
     return parser
@@ -155,6 +232,7 @@ def main() -> None:
 
     feature_parsers = (
         get_scan_library_parser,
+        get_set_language_parser,
         get_srt_tool_parser,
     )
     for feature_parser in feature_parsers:
@@ -169,6 +247,16 @@ def main() -> None:
                 show=args.show,
                 json_file=args.json,
                 csv_file=args.csv,
+            )
+        case "set-language":
+            set_languages(
+                input_file=args.input_file,
+                output_file=args.output_file,
+                audio_languages=args.audio_lang,
+                subtitle_languages=args.subtitle_lang,
+                audio_titles=args.audio_title,
+                subtitle_titles=args.subtitle_title,
+                dry_run=args.dry_run,
             )
         case "srt-tools":
             srt_tools.process_file(
