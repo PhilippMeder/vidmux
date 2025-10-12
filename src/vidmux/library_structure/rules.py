@@ -69,15 +69,16 @@ def check_filename_matches_folder(path: Path, params) -> list[ValidationIssue]:
     # Strip allowed suffixes from filename, e.g. "- Director's Cut", "[EN+DE]"
     allowed_suffixes = re.compile(params["allowed_suffixes"])
     cleaned_file_stem = allowed_suffixes.sub("", file_stem).strip()
+    cleaned_folder_name = allowed_suffixes.sub("", folder_name).strip()
 
-    if cleaned_file_stem != folder_name:
+    if cleaned_folder_name not in cleaned_file_stem:
         issues.append(
             ValidationIssue(
                 path=path,
                 code=IssueCode.FILE_AND_FOLDER_NAME_DIFFER,
                 message=(
                     f"Filename '{file_stem}' differs from folder '{folder_name}' "
-                    "(except for allowed suffixes)"
+                    f"(except for allowed suffixes)"
                 ),
                 severity=Severity.WARNING,
             )
