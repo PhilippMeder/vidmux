@@ -5,9 +5,77 @@ from pathlib import Path
 
 import vidmux.srt_tools as srt_tools
 from vidmux.language_tools import set_languages
+from vidmux.library_structure import scan_library_structure
 from vidmux.mux_audio_tracks import mux_audio_tracks
 from vidmux.video_inspection import get_video_resolution
 from vidmux.video_library_scan import scan_mode
+
+
+def get_library_structur_parser(
+    subparsers: argparse._SubParsersAction | None = None,
+    prog: str | None = None,
+    formatter_class: type | None = None,
+) -> argparse.ArgumentParser:
+    """
+    Create and configure the argument parser for 'lib-structure'.
+
+    This function can either add a subparser to an existing ArgumentParser
+    (via `subparsers`) or create a standalone parser when called independently.
+    Useful for modular CLI designs.
+
+    Parameters
+    ----------
+    subparsers : argparse._SubParsersAction, optional
+        Subparsers object from the main parser to which this parser should be added.
+        If None, a standalone ArgumentParser is created instead.
+    prog : str, optional
+        The program name used in standalone mode. Ignored if `subparsers` is provided.
+    formatter_class : type, optional
+        The formatter class to be used for argument help formatting. Defaults to
+        argparse.ArgumentDefaultsHelpFormatter.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        The configured argument parser (necessary esp. for standalone mode).
+    """
+    parser_options = {
+        "description": "Scan the structure of a library.",
+        "formatter_class": formatter_class or argparse.ArgumentDefaultsHelpFormatter,
+    }
+    if subparsers:
+        parser = subparsers.add_parser(
+            "lib-structure", help=parser_options["description"], **parser_options
+        )
+    else:
+        parser = argparse.ArgumentParser(prog=prog, **parser_options)
+
+    parser.add_argument(
+        "library",
+        type=Path,
+        help="Path to the library directory.",
+    )
+    parser.add_argument(
+        "--extensions",
+        metavar="EXTENSION",
+        nargs="+",
+        default=[".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"],
+        help="File extensions to include.",
+    )
+    parser.add_argument(
+        "--print",
+        dest="show",
+        action="store_true",
+        help="Print results to the console.",
+    )
+    parser.add_argument(
+        "--json", metavar="FILE", type=Path, help="Path to output JSON file."
+    )
+    parser.add_argument(
+        "--csv", metavar="FILE", type=Path, help="Path to output CSV file."
+    )
+
+    return parser
 
 
 def get_mux_audio_tracks_parser(
@@ -344,6 +412,7 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="feature")
 
     feature_parsers = (
+        get_library_structur_parser,
         get_mux_audio_tracks_parser,
         get_resolution_parser,
         get_scan_library_parser,
@@ -355,6 +424,14 @@ def main() -> None:
 
     args = parser.parse_args()
     match args.feature:
+        case "lib-structure":
+            scan_library_structure(
+                args.library,
+                args.extensions,
+                show=args.show,
+                json_file=args.json,
+                csv_file=args.csv,
+            )
         case "mux-audio-tracks":
             mux_audio_tracks(args.output, args.inputs, dry_run=args.dry_run)
         case "resolution":
