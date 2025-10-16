@@ -252,6 +252,24 @@ def get_scan_library_parser(
     parser.add_argument(
         "--csv", metavar="FILE", type=Path, help="Path to output CSV file."
     )
+    parser.add_argument(
+        "--name",
+        metavar="FILE",
+        type=Path,
+        help=(
+            "Path to output JSON file for name suggestions (no names will be suggested "
+            "if not specified)."
+        ),
+    )
+    parser.add_argument(
+        "-l",
+        "--default-language",
+        dest="default_language",
+        metavar="LANGUAGE_ID",
+        type=str,
+        default="??",
+        help="Language identifier used for undefined languages.",
+    )
 
     return parser
 
@@ -444,6 +462,8 @@ def main() -> None:
                 show=args.show,
                 json_file=args.json,
                 csv_file=args.csv,
+                name_file=args.name,
+                default_language=args.default_language,
             )
         case "set-language":
             set_languages(

@@ -12,17 +12,137 @@ from vidmux.video_inspection import (
 )
 
 
+def select_main_video_track(video_tracks: list) -> list:
+    """
+    Return the main video track.
+
+    From all tracks, the track with highest resolution (width*height) is selected.
+    """
+    if not video_tracks:
+        return None
+
+    main_track = max(
+        video_tracks, key=lambda track: track.get("width", 0) * track.get("height", 0)
+    )
+
+    return main_track
+
+
+def get_languages_tag(audio_tracks: list, undefined_language: str = "??") -> str | None:
+    """Return the tag for audio languages."""
+    languages = []
+    for audio_track in audio_tracks:
+        lang = audio_track.get("language", "und")
+        if lang != "und":
+            languages.append(lang.upper()[:2])  # e.g. 'eng' -> 'EN'
+        else:
+            languages.append(undefined_language)
+
+    language_tag = None
+    if len(languages) == 1:
+        language_tag = f"[{languages.pop()}]"
+    elif len(languages) > 1:
+        language_tag = "[" + "+".join(languages) + "]"
+
+    return language_tag
+
+
+def get_resolution_tag(video_tracks: list) -> str | None:
+    """Return the tag for the video resolution."""
+    main_track = select_main_video_track(video_tracks)
+    height = main_track.get("height", 0)
+    if not height:
+        return None
+    field_order = main_track.get("field_order", "progressive")
+    # Round to standard values
+    if height >= 2160:
+        base = "2160"
+    elif height >= 1440:
+        base = "1440"
+    elif height >= 1080:
+        base = "1080"
+    elif height >= 720:
+        base = "720"
+    elif height >= 576:
+        base = "576"
+    elif height >= 480:
+        base = "480"
+    elif height >= 360:
+        base = "360"
+    else:
+        base = str(height)
+
+    # Get scan type
+    scan_type = "i" if field_order.lower() in {"tt", "bb", "tb", "bt"} else "p"
+
+    return f"[{base}{scan_type}]"
+
+
+def suggest_name_tags(report: dict, undefined_language: str = "??") -> list[str]:
+    """Return a list of suggested tags based on the resolution and languages."""
+    tags = []
+    if language_tag := get_languages_tag(
+        report["audio_tracks"], undefined_language=undefined_language
+    ):
+        tags.append(language_tag)
+    if resolution_tag := get_resolution_tag(report["video_tracks"]):
+        tags.append(resolution_tag)
+
+    return tags
+
+
+def suggest_name(report: dict, undefined_language: str = "??") -> str:
+    """Suggest a name."""
+    file = Path(report["filename"])
+    filename = file.stem
+    basename = file.parent.name if file.parent.name else filename
+
+    tags = suggest_name_tags(report, undefined_language=undefined_language)
+    guessed_version = filename.removeprefix(basename)
+    guessed_version = guessed_version.removeprefix(" - ")
+    for tag in tags:
+        guessed_version = guessed_version.removesuffix(tag)
+    guessed_version = guessed_version.strip()
+    if guessed_version:
+        if not guessed_version.startswith("["):
+            guessed_version = "[" + guessed_version
+        if not guessed_version.endswith("]"):
+            guessed_version += "] "
+
+    if not guessed_version and not tags:
+        return f"{basename}/{basename}.{file.suffix}"
+
+    suggestion = f"{basename}/{basename} - " + guessed_version + " ".join(tags)
+
+    return suggestion.strip() + file.suffix
+
+
 def make_track_entries(tracks: list) -> list:
-    """Return the track list where each track has index, language, codec and title."""
-    return [
-        {
+    """
+    Return the track list with the most important info.
+
+    Each track has index, language, codec and title.
+    Video tracks will also include (if available):
+    - width and height
+    - field_order
+    """
+    entries = []
+    for idx, track in enumerate(tracks):
+        entry = {
             "index": idx,
             "language": track.get("tags", {}).get("language", "unknown"),
             "codec": track.get("codec_name", "unknown"),
             "title": track.get("tags", {}).get("title", ""),
         }
-        for idx, track in enumerate(tracks)
-    ]
+        # If available (video tracks), include the resolution info
+        if "width" in track and "height" in track:
+            entry["width"] = track["width"]
+            entry["height"] = track["height"]
+        if "field_order" in track:
+            entry["field_order"] = track["field_order"]
+        entries.append(entry)
+
+    return entries
 
 
 def show_track_entries(
@@ -120,6 +240,8 @@ def scan_mode(
     show: bool = True,
     json_file: Path | None = None,
     csv_file: Path | None = None,
+    name_file: Path | None = None,
+    default_language: str = "??",
 ) -> bool:
     """Run the scan and save/show the output."""
     if not (show or json_file or csv_file):
@@ -136,5 +258,13 @@ def scan_mode(
 
     if csv_file:
         save_csv(scan_result, csv_file)
+
+    if name_file:
+        suggestions = {}
+        for report in scan_result:
+            suggested_name = suggest_name(report, undefined_language=default_language)
+            if (filename := report["filename"]) != suggested_name:
+                suggestions[filename] = suggested_name
+        save_json(suggestions, name_file)
 
     return True
