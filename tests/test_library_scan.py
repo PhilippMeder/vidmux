@@ -1,7 +1,5 @@
 """ "Provide tests for the library scan."""
 
-from pathlib import Path
-
 import pytest
 
 from vidmux.video_library_scan import suggest_name
@@ -21,44 +19,64 @@ TEST_DATA = (
         "filename": "Library/Example Movie (2000)/Example Movie (2000).mp4",
         "video_tracks": [{"width": 1920, "height": 1080}],
         "audio_tracks": [{"language": "und"}],
-        "expected_filename": "Library/Example Movie (2000)/Example Movie (2000) - [EN] [1080p].mp4",
+        "expected_filename": (
+            "Library/Example Movie (2000)/Example Movie (2000) - [EN] [1080p].mp4"
+        ),
     },
     # Version and two language tracks
     {
-        "filename": "Example Movie (2000)/Example Movie (2000) - Director's Cut [DE+EN].mp4",
+        "filename": "Example Movie (2000)/Example Movie (2000) - DVD [DE+EN].mp4",
         "video_tracks": [{"width": 1920, "height": 1080}],
         "audio_tracks": [{"language": "deu"}, {"language": "und"}],
-        "expected_filename": "Example Movie (2000)/Example Movie (2000) - [Director's Cut] [DE+EN] [1080p].mp4",
+        "expected_filename": (
+            "Example Movie (2000)/Example Movie (2000) - [DVD] [DE+EN] [1080p].mp4"
+        ),
     },
     # Version already in brackets
     {
-        "filename": "Library/Example Movie (2000)/Example Movie (2000) - [Director's Cut] [EN].mp4",
+        "filename": (
+            "Library/Example Movie (2000)/Example Movie (2000) - [DVD] [EN].mp4"
+        ),
         "video_tracks": [{"width": 1920, "height": 1080}],
         "audio_tracks": [{"language": "und"}],
-        "expected_filename": "Library/Example Movie (2000)/Example Movie (2000) - [Director's Cut] [EN] [1080p].mp4",
+        "expected_filename": (
+            "Library/Example Movie (2000)/Example Movie (2000) - [DVD] [EN] [1080p].mp4"
+        ),
     },
     # Nested parent directory
     {
-        "filename": "Library/Some Folder/Example Movie (2000) - Director's Cut [EN].mp4",
+        "filename": "Library/Some Folder/Example Movie (2000) - DVD [EN].mp4",
         "video_tracks": [{"width": 1920, "height": 1080}],
         "audio_tracks": [{"language": "und"}],
-        "expected_filename": "Library/Some Folder/Example Movie (2000)/Example Movie (2000) - [Director's Cut] [EN] [1080p].mp4",
+        "expected_filename": (
+            "Library/Some Folder/Example Movie (2000)/Example Movie (2000) - "
+            "[DVD] [EN] [1080p].mp4"
+        ),
     },
     # In a folder, but not in the correct one
     {
-        "filename": "Library/Some Folder/Example Movie (2000) - Director's Cut [EN].mp4",
+        "filename": "Library/Some Folder/Example Movie (2000) - DVD [EN].mp4",
         "video_tracks": [{"width": 1920, "height": 1080}],
         "audio_tracks": [{"language": "und"}],
-        "expected_filename": "Library/Some Folder/Example Movie (2000)/Example Movie (2000) - [Director's Cut] [EN] [1080p].mp4",
+        "expected_filename": (
+            "Library/Some Folder/Example Movie (2000)/Example Movie (2000) - "
+            "[DVD] [EN] [1080p].mp4"
+        ),
     },
     # Has a 'subtitle' in the name, e.g. "Franchise Name - First installment"
     # Currently this is only recognized correctly if the movie already is in the correct
     # directory
     {
-        "filename": "Library/Example Movie - This is a subtitle (2000)/Example Movie - This is a subtitle (2000).mp4",
+        "filename": (
+            "Library/Example Movie - This is a subtitle (2000)/"
+            "Example Movie - This is a subtitle (2000).mp4"
+        ),
         "video_tracks": [{"width": 1920, "height": 1080}],
         "audio_tracks": [{"language": "und"}],
-        "expected_filename": "Library/Example Movie - This is a subtitle (2000)/Example Movie - This is a subtitle (2000) - [EN] [1080p].mp4",
+        "expected_filename": (
+            "Library/Example Movie - This is a subtitle (2000)/"
+            "Example Movie - This is a subtitle (2000) - [EN] [1080p].mp4"
+        ),
     },
 )
 

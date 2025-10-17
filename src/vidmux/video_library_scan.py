@@ -139,7 +139,7 @@ def extract_basename_from_filename(
     if (separator := " - ") in clean_name:
         parts = clean_name.split(separator)
         # If the separated part is in the directory name, treat it as part of the name
-        if not parts[-1] in parentname:
+        if parts[-1] not in parentname:
             return separator.join(parts[:-1]).strip()
 
     return clean_name
