@@ -92,29 +92,75 @@ def suggest_name_tags(report: dict, undefined_language: str = "??") -> list[str]
 
 
 def suggest_name(report: dict, undefined_language: str = "??") -> str:
-    """Suggest a name."""
-    file = Path(report["filename"])
-    filename = file.stem
-    basename = file.parent.name if file.parent.name else filename
+    """Suggest a name based on the report."""
+    original_path = Path(report["filename"])
+    filename = original_path.stem
+    extension = original_path.suffix
+    parent = original_path.parent
 
+    # Get tags
     tags = suggest_name_tags(report, undefined_language=undefined_language)
-    guessed_version = filename.removeprefix(basename)
-    guessed_version = guessed_version.removeprefix(" - ")
+
+    # Get basename and guess version (if provided)
+    basename = extract_basename_from_filename(filename, parent.name, tags)
+    guessed_version = extract_version_from_filename(filename, basename, tags)
+
+    # Construct new filename
+    parts = [guessed_version] if guessed_version else []
+    parts.extend(tags)
+    suffix = (" - " + " ".join(parts)) if parts else ""
+
+    new_filename = f"{basename}{suffix}{extension}"
+
+    # Check whether a subfolder has to be created
+    if parent.name == basename:
+        new_path = parent / new_filename
+    else:
+        new_path = parent / basename / new_filename
+
+    return str(new_path)
+
+
+def extract_basename_from_filename(
+    filename: str, parentname: str, tags: list[str]
+) -> str:
+    """
+    Extract the basename from filename given a list of tags.
+
+    Note:
+    This is the bottleneck. Good filenames and structures as an input are recommended.
+    """
+    # Delete tags from filename
+    clean_name = filename
     for tag in tags:
-        guessed_version = guessed_version.removesuffix(tag)
-    guessed_version = guessed_version.strip()
-    if guessed_version:
-        if not guessed_version.startswith("["):
-            guessed_version = "[" + guessed_version
-        if not guessed_version.endswith("]"):
-            guessed_version += "] "
+        clean_name = clean_name.replace(tag, "")
+    # Delete additional information separated by " - "
+    clean_name = clean_name.strip()
+    if (separator := " - ") in clean_name:
+        parts = clean_name.split(separator)
+        # If the separated part is in the directory name, treat it as part of the name
+        if not parts[-1] in parentname:
+            return separator.join(parts[:-1]).strip()
 
-    if not guessed_version and not tags:
-        return f"{basename}/{basename}.{file.suffix}"
+    return clean_name
 
-    suggestion = f"{basename}/{basename} - " + guessed_version + " ".join(tags)
 
-    return suggestion.strip() + file.suffix
+def extract_version_from_filename(filename: str, basename: str, tags: list[str]) -> str:
+    """Extract the version name."""
+    remainder = filename.removeprefix(basename).strip()
+    if remainder.startswith("-"):
+        remainder = remainder[1:].strip()
+
+    # Delete tags from filename
+    for tag in tags:
+        remainder = remainder.replace(tag, "").strip()
+
+    # Treat remainder as version name
+    if remainder:
+        remainder = remainder.strip(" []")  # Strip old brackets
+        return f"[{remainder}]"
+
+    return ""
 
 
 def make_track_entries(tracks: list) -> list:
