@@ -300,17 +300,28 @@ def scan_mode(
         print_to_terminal(scan_result)
 
     if json_file:
-        save_json(scan_result, json_file)
+        save_json(
+            {
+                "_type": "vidmux-scan-report",
+                "library": str(library.resolve()),
+                "files": scan_result,
+            },
+            json_file,
+        )
 
     if csv_file:
         save_csv(scan_result, csv_file)
 
     if name_file:
-        suggestions = {}
+        suggestions = {
+            "_type": "vidmux-renaming-mapping",
+            "library": str(library.resolve()),
+            "files": {},
+        }
         for report in scan_result:
             suggested_name = suggest_name(report, undefined_language=default_language)
             if (filename := report["filename"]) != suggested_name:
-                suggestions[filename] = suggested_name
+                suggestions["files"][filename] = suggested_name
         save_json(suggestions, name_file)
 
     return True
