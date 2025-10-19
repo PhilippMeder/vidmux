@@ -1,9 +1,9 @@
 """Tools to scan a video library."""
 
 import csv
-import json
 from pathlib import Path
 
+from vidmux.filesystem import JSONFile, JSONTypes
 from vidmux.video_inspection import (
     get_audio_tracks,
     get_format,
@@ -232,14 +232,6 @@ def scan_video_library(
     return results
 
 
-def save_json(results: list[dict], path: Path) -> None:
-    """Save results to a JSON file."""
-    with open(path, "w", encoding="utf-8") as file:
-        json.dump(results, file, indent=2, ensure_ascii=False)
-
-    print(f"Saved JSON: {path}")
-
-
 def save_csv(results: list[dict], path: Path) -> None:
     """Save results to a CSV file."""
     with open(path, "w", newline="", encoding="utf-8") as file:
@@ -300,28 +292,24 @@ def scan_mode(
         print_to_terminal(scan_result)
 
     if json_file:
-        save_json(
-            {
-                "_type": "vidmux-scan-report",
-                "library": str(library.resolve()),
-                "files": scan_result,
-            },
-            json_file,
+        outfile = JSONFile(
+            library.resolve(), scan_result, file_type=JSONTypes.SCAN_REPORT
         )
+        outfile.save(json_file)
 
     if csv_file:
         save_csv(scan_result, csv_file)
 
     if name_file:
-        suggestions = {
-            "_type": "vidmux-renaming-mapping",
-            "library": str(library.resolve()),
-            "files": {},
-        }
+        name_suggestions = {}
         for report in scan_result:
             suggested_name = suggest_name(report, undefined_language=default_language)
             if (filename := report["filename"]) != suggested_name:
-                suggestions["files"][filename] = suggested_name
-        save_json(suggestions, name_file)
+                name_suggestions[filename] = suggested_name
+
+        outfile = JSONFile(
+            library.resolve(), name_suggestions, file_type=JSONTypes.RENAMING_MAPPING
+        )
+        outfile.save(name_file)
 
     return True
