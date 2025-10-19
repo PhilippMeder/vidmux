@@ -7,6 +7,7 @@ import vidmux.srt_tools as srt_tools
 from vidmux.language_tools import set_languages
 from vidmux.library_structure import scan_library_structure
 from vidmux.mux_audio_tracks import mux_audio_tracks
+from vidmux.renaming import rename_mode
 from vidmux.video_inspection import get_video_resolution
 from vidmux.video_library_scan import scan_mode
 
@@ -184,6 +185,61 @@ def get_resolution_parser(
         "path_or_url",
         type=str,
         help="Path or URL to the video.",
+    )
+
+    return parser
+
+
+def get_rename_parser(
+    subparsers: argparse._SubParsersAction | None = None,
+    prog: str | None = None,
+    formatter_class: type | None = None,
+) -> argparse.ArgumentParser:
+    """
+    Create and configure the argument parser for 'srt-tools'.
+
+    This function can either add a subparser to an existing ArgumentParser
+    (via `subparsers`) or create a standalone parser when called independently.
+    Useful for modular CLI designs.
+
+    Parameters
+    ----------
+    subparsers : argparse._SubParsersAction, optional
+        Subparsers object from the main parser to which this parser should be added.
+        If None, a standalone ArgumentParser is created instead.
+    prog : str, optional
+        The program name used in standalone mode. Ignored if `subparsers` is provided.
+    formatter_class : type, optional
+        The formatter class to be used for argument help formatting. Defaults to
+        argparse.ArgumentDefaultsHelpFormatter.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        The configured argument parser (necessary esp. for standalone mode).
+    """
+    parser_options = {
+        "description": (
+            "USE CAREFULLY! Rename/move files according to the mapping given by a file."
+        ),
+        "formatter_class": formatter_class or argparse.ArgumentDefaultsHelpFormatter,
+    }
+    if subparsers:
+        parser = subparsers.add_parser(
+            "rename", help=parser_options["description"], **parser_options
+        )
+    else:
+        parser = argparse.ArgumentParser(prog=prog, **parser_options)
+
+    parser.add_argument(
+        "file",
+        type=Path,
+        help="JSON file containing the renaming mapping (see 'scan --name').",
+    )
+    parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Do not create *.bak files containing the original filename.",
     )
 
     return parser
@@ -432,6 +488,7 @@ def main() -> None:
     feature_parsers = (
         get_library_structur_parser,
         get_mux_audio_tracks_parser,
+        get_rename_parser,
         get_resolution_parser,
         get_scan_library_parser,
         get_set_language_parser,
@@ -452,6 +509,8 @@ def main() -> None:
             )
         case "mux-audio-tracks":
             mux_audio_tracks(args.output, args.inputs, dry_run=args.dry_run)
+        case "rename":
+            rename_mode(args.file, backup=not args.no_backup)
         case "resolution":
             resolution = get_video_resolution(args.path_or_url)
             print(f"Video resolution of '{args.path_or_url}':\n{resolution}")
