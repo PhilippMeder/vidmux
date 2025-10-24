@@ -50,14 +50,15 @@ vidmux --help
 3. [Set audio/subtitle metadata](#set-audio-and-subtitle-metadata)
 4. [Scan library structure](#scan-for-issues-in-the-library-structure)
 5. [Get video resolution](#get-video-resolution)
-6. [Shift SRT timestamps](#shift-srt-timestamps)
+6. [Rename files](#rename-files)
+7. [Shift SRT timestamps](#shift-srt-timestamps)
 
 ### Scan for codecs, audio and subtitle tracks
 
 Scan the video files of a library for video/audio codecs and the included audio and subtitle tracks.
 
 ```bash
-vidmux scan [--extensions EXTENSION [EXTENSION ...]] [--print] [--json FILE] [--csv FILE] library
+vidmux scan [-h] [--extensions EXTENSION [EXTENSION ...]] [--print] [--json FILE] [--csv FILE] [--name FILE] [-l LANGUAGE_ID] library
 ```
 
 Options:
@@ -67,6 +68,8 @@ Options:
 - `--print`: Print the results to the console/terminal.
 - `--json`: Specify a JSON file where the results should be saved.
 - `--csv`: Specify a CSV file where the results should be saved.
+- `--name`: Specify a JSON file where name suggestions will be stored (required for the `rename` feature).
+- `-l, --default-language`: Language identifier that will be used to interpret undefined languages of audio/subtitle tracks (currently only applied for naming suggestions).
 
 ### Mux audio tracks
 
@@ -111,8 +114,8 @@ Scan and find issues in the structure of a movie library. Following rules are cu
 - Every movie should be in an appropriate subfolder with corresponding name, e.g. `Seven Samurai (1954)/Seven Samurai (1954).mp4`. It is okay to have multiple versions or parts in the same folder as long as the basic name does not change. Example:
     ```md
     movie-library/Blade Runner (1982)
-    ├── Blade Runner (1982) - [HD].mp4
-    ├── Blade Runner (1982) - [SD].mp4
+    ├── Blade Runner (1982) - [1080p].mp4
+    ├── Blade Runner (1982) - [480p].mp4
     ├── Blade Runner (1982) - Director's Cut.mp4
     └── Blade Runner (1982) - Final Cut.mp4
     ```
@@ -138,6 +141,18 @@ Inspect and show the video resolution of a video file (supports URL).
 ```bash
 vidmux resolution [-h] path_or_url
 ```
+
+### Rename files
+
+Rename files according to a mapping given by a file (use `vidmux scan --name`).
+
+```bash
+vidmux rename [-h] [--no-backup] file
+```
+
+Options:
+
+- `--no-backup`: Prevent the creation of a file containing the original filename (so you can revoke the process).
 
 ### Shift SRT timestamps
 

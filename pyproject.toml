@@ -1,6 +1,6 @@
 [project]
 name = "vidmux"
-version = "0.1.0"
+version = "0.2.0"
 license = {file = "LICENSE"}
 description = "Inspect and modify video/audio/subtitle tracks using FFmpeg."
 readme = "README.md"
