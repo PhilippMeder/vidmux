@@ -92,10 +92,12 @@ class FilenameParser:
         """Return Episode object with the information from re_match."""
         version = self._normalize_version(re_match.group("version"))
 
+        series_title = re_match.group("series").strip()
+
         return Episode(
             raw=raw,
-            series=re_match.group("series").strip(),
-            title=re_match.group("series").strip(),
+            series=series_title,
+            title=series_title,
             year=self._optional_to_int(re_match.group("year")),
             metadata_provider_id=re_match.group("provider"),
             season=int(re_match.group("season")),
