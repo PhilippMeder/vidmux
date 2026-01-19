@@ -18,7 +18,7 @@ def test_movie_parsing(parser: FilenameParser, movie_test_data: dict) -> None:
     assert media == movie_test_data["media"]
 
 
-def test_movie_parsing(parser: FilenameParser, episode_test_data: dict) -> None:
+def test_episode_parsing(parser: FilenameParser, episode_test_data: dict) -> None:
     """Test the parsing of a episode filename."""
     media = parser.parse(episode_test_data["filename"])
 
