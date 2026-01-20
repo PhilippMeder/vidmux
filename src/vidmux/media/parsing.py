@@ -31,6 +31,45 @@ MOVIE_PATTERN = re.compile(
     re.VERBOSE | re.IGNORECASE,
 )
 
+# Take everything before year as title -> make dashes possible
+MOVIE_SPLIT_PATTERN = re.compile(
+    r"""
+    ^
+    (?P<title>.+?)
+    (?:\s*\[(?P<provider>[^\]]+)\])?
+    \s*\(
+        (?P<year>\d{4})
+    \)
+    (?P<suffix>.*)?
+$
+""",
+    re.VERBOSE | re.IGNORECASE,
+)
+
+MOVIE_SUFFIX_PATTERN = re.compile(
+    r"""
+    ^
+    (?:\s*\[(?P<provider>[^\]]+)\])?
+    (?:\s*-\s*
+        (?:
+            (?P<part>
+                (?:cd|dvd|part|pt|disc|disk)
+                [ .\-_]?
+                (?:\d+|[a-d])
+            )
+            |
+            (?P<version>
+                (?:\[[^\]]+\]\s*)+
+                |
+                .+
+            )
+        )
+    )?
+    $
+""",
+    re.VERBOSE | re.IGNORECASE,
+)
+
 SHOW_PATTERN = re.compile(
     r"""
     ^
@@ -68,6 +107,9 @@ class FilenameParser:
         if re_match := SHOW_PATTERN.match(filename):
             return self._parse_show(filename, re_match)
 
+        if re_match := MOVIE_SPLIT_PATTERN.match(filename):
+            return self._parse_movie_with_year(filename, re_match)
+
         if re_match := MOVIE_PATTERN.match(filename):
             return self._parse_movie(filename, re_match)
 
@@ -83,6 +125,27 @@ class FilenameParser:
             title=re_match.group("title").strip(),
             year=self._optional_to_int(re_match.group("year")),
             metadata_provider_id=re_match.group("provider"),
+            version=version,
+            version_tokens=self._tokenize_version(version),
+            part=part,
+        )
+
+    def _parse_movie_with_year(self, raw: str, re_match: re.Match) -> Movie:
+        """Return Movie object with the information from re_match (dash friendly)."""
+        suffix = re_match.group("suffix")
+        suffix_re_match = MOVIE_SUFFIX_PATTERN.match(suffix)
+        part = self._normalize_part(suffix_re_match.group("part"))
+        version = (
+            None if part else self._normalize_version(suffix_re_match.group("version"))
+        )
+
+        provider = re_match.group("provider") or suffix_re_match.group("provider")
+
+        return Movie(
+            raw=raw,
+            title=re_match.group("title").strip(),
+            year=self._optional_to_int(re_match.group("year")),
+            metadata_provider_id=provider,
             version=version,
             version_tokens=self._tokenize_version(version),
             part=part,

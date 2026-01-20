@@ -134,6 +134,37 @@ class FfmpegMock:
                 version_tokens=[],
             ),
         },
+        {
+            "id": "movie_with_dash_in_title",
+            "filename": "Example Movie - This is a subtitle (2000)",
+            "media": Movie(
+                raw="Example Movie - This is a subtitle (2000)",
+                title="Example Movie - This is a subtitle",
+                year=2000,
+                version_tokens=[],
+            ),
+            "canonical": CanonicalName(
+                filename="Example Movie - This is a subtitle (2000)",
+                directory="Example Movie - This is a subtitle (2000)",
+                version_tokens=[],
+            ),
+        },
+        {
+            "id": "movie_with_dash_in_title_and_version",
+            "filename": "Example Movie - This is a subtitle (2000) - [EN] [1080p]",
+            "media": Movie(
+                raw="Example Movie - This is a subtitle (2000) - [EN] [1080p]",
+                title="Example Movie - This is a subtitle",
+                year=2000,
+                version="[EN] [1080p]",
+                version_tokens=["EN", "1080p"],
+            ),
+            "canonical": CanonicalName(
+                filename="Example Movie - This is a subtitle (2000) - [EN] [1080p]",
+                directory="Example Movie - This is a subtitle (2000)",
+                version_tokens=["EN", "1080p"],
+            ),
+        },
     ),
     ids=lambda test_case: test_case["id"],
 )
@@ -198,7 +229,7 @@ def movie_test_data(request) -> Generator[dict]:
             ),
         },
         {
-            "id": "episode_with_title",
+            "id": "episode_with_episode_title",
             "filename": "Example Show S01E01 Episode Title",
             "media": Episode(
                 raw="Example Show S01E01 Episode Title",
@@ -212,6 +243,41 @@ def movie_test_data(request) -> Generator[dict]:
             "canonical": CanonicalName(
                 filename="Example Show S01E01 Episode Title",
                 directory="Example Show/Season 01",
+                version_tokens=[],
+            ),
+        },
+        {
+            "id": "episode_with_dash_in_series_title",
+            "filename": "Example Show - This is a subtitle S01E01",
+            "media": Episode(
+                raw="Example Show - This is a subtitle S01E01",
+                title="Example Show - This is a subtitle",
+                series="Example Show - This is a subtitle",
+                season=1,
+                episode=1,
+                version_tokens=[],
+            ),
+            "canonical": CanonicalName(
+                filename="Example Show - This is a subtitle S01E01",
+                directory="Example Show - This is a subtitle/Season 01",
+                version_tokens=[],
+            ),
+        },
+        {
+            "id": "episode_with_dash_in_series_title_with_episode_title",
+            "filename": "Example Show - This is a subtitle S01E01 Episode Title",
+            "media": Episode(
+                raw="Example Show - This is a subtitle S01E01 Episode Title",
+                title="Example Show - This is a subtitle",
+                series="Example Show - This is a subtitle",
+                season=1,
+                episode=1,
+                episode_title="Episode Title",
+                version_tokens=[],
+            ),
+            "canonical": CanonicalName(
+                filename="Example Show - This is a subtitle S01E01 Episode Title",
+                directory="Example Show - This is a subtitle/Season 01",
                 version_tokens=[],
             ),
         },
