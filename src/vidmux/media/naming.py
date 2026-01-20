@@ -127,3 +127,18 @@ class FilenameCreator:
             filename += f" - {version}"
 
         return CanonicalName(filename, directory, version_tokens)
+
+
+DEFAULT_CREATOR = FilenameCreator()
+
+
+def get_canonical_name(
+    media: BaseMedia,
+    additional_tags: list[str] | None = None,
+    options: NamingOptions = DEFAULT_NAMING_OPTIONS,
+) -> CanonicalName:
+    """Create a canonical name from a media object.."""
+
+    return DEFAULT_CREATOR.create(
+        media, additional_tags=additional_tags, options=options
+    )
