@@ -7,35 +7,39 @@ import pytest
 from vidmux.library_structure import registry, load_default_rules, run_validation
 
 MOVIES = {
-    "/Example Movie A.mp4": ["MISSING_YEAR"],
-    "/Example Movie B (20).mp4": ["MISSING_YEAR"],
-    "/Example Movie C (2009).mp4": [],
-    "Example Movie D (2003)/Example Movie D (2003) [EN+DE].mp4": [],
-    "Example Movie E (2003)/Example Movie E2 (2003).mp4": [
-        "FILE_AND_FOLDER_NAME_DIFFER"
-    ],
-    "Example Movie F.mp4": ["MISSING_YEAR", "FILE_NOT_IN_FOLDER"],
-    "Example Movie G (2003).mp4": ["FILE_NOT_IN_FOLDER"],
+    "Example Movie A/Example Movie A.mp4": ["MISSING_YEAR"],
+    "Example Movie B (20)/Example Movie B (20).mp4": ["MISSING_YEAR"],
+    "Example Movie C (2009)/Example Movie C (2009).mp4": [],
+    "Example Movie D (2003)/Example Movie D (2003) - [EN+DE].mp4": [],
+    "Example Movie E (2003)/Example Movie E2 (2003).mp4": ["FILE_IN_WRONG_FOLDER"],
+    "Example Movie F.mp4": ["MISSING_YEAR", "FILE_IN_WRONG_FOLDER"],
+    "Example Movie G (2003).mp4": ["FILE_IN_WRONG_FOLDER"],
 }
+
+SHOWS = {
+    "Example Show A/Season 01/Example Show A S01E01.mp4": ["MISSING_YEAR"],
+    "Example Show B (20)/Season 01/Example Show B (20) S01E01.mp4": ["MISSING_YEAR"],
+    "Example Show C (2000)/Season 01/Example Show C (2000) S01E01.mp4": [],
+    "Example Show D2 (2000)/Season 01/Example Show D (2000) S01E01.mp4": [
+        "FILE_IN_WRONG_FOLDER"
+    ],
+    "Example Show E (2000)/Season 02/Example Show E (2000) S01E01.mp4": [
+        "FILE_IN_WRONG_FOLDER"
+    ],
+    "Example Show F (2000)/Example Show F (2000) S01E01.mp4": ["FILE_IN_WRONG_FOLDER"],
+    "Example Show G S01E01.mp4": ["MISSING_YEAR", "FILE_IN_WRONG_FOLDER"],
+    "Example Show H (2000) S01E01.mp4": ["FILE_IN_WRONG_FOLDER"],
+}
+
+ALL_MEDIA = MOVIES | SHOWS  # Merge movies and shows
 
 
 @pytest.fixture(scope="module")
 def example_library(tmp_path_factory: pytest.TempPathFactory) -> Path:
     tmp_path = tmp_path_factory.mktemp("library")
 
-    for name in MOVIES.keys():
-        if "/" in name:
-            # File should be in folder (name equals filename if no folder is provided)
-            parts = name.split("/")
-            folder_name = parts[0] if len(parts) == 1 else parts[-2]
-            file_name = parts[-1]
-            if not folder_name:
-                folder_name = file_name.removesuffix(".mp4")
-        else:
-            # File should not be in a folder
-            folder_name = None
-
-        path = tmp_path / folder_name / file_name if folder_name else tmp_path / name
+    for name in ALL_MEDIA.keys():
+        path = tmp_path / name
 
         path.parent.mkdir(parents=True, exist_ok=True)
         path.touch()
@@ -49,7 +53,7 @@ def _load_default_rules():
     load_default_rules()
 
 
-@pytest.mark.parametrize("total_name,expected_codes", MOVIES.items())
+@pytest.mark.parametrize("total_name,expected_codes", ALL_MEDIA.items())
 def test_library_issues(example_library, total_name, expected_codes):
     """Test each movie against expected validation results."""
     reports = run_validation(example_library.rglob("*.mp4"))

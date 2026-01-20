@@ -5,6 +5,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable, Any
 
+from vidmux.media import (
+    BaseMedia,
+    CanonicalName,
+    get_canonical_name,
+    get_media_from_filename,
+)
+
 
 class Severity(Enum):
     ERROR = "error"
@@ -13,10 +20,21 @@ class Severity(Enum):
 
 
 class IssueCode(Enum):
-    FILE_NOT_IN_FOLDER = "File not in its own folder"
     FILE_AND_FOLDER_NAME_DIFFER = "Filename differs from folder"
+    FILE_NOT_IN_FOLDER = "File not in its own folder"
+    FILE_PARSING_ERROR = "File could not be parsed according to the naming conventions"
+    FILE_IN_WRONG_FOLDER = "File is in a wrong folder"
     BAD_CHARACTER_IN_NAME = "Invalid character in filename"
     MISSING_YEAR = "Missing year in title"
+
+
+class ValidationFile:
+    """Container holding the BaseMedia and CanonicalName objects for a path."""
+
+    def __init__(self, filepath: Path) -> None:
+        self.path: Path = filepath
+        self.media: BaseMedia = get_media_from_filename(filepath.stem)
+        self.canonical_name: CanonicalName = get_canonical_name(self.media)
 
 
 @dataclass
@@ -62,7 +80,7 @@ class Rule:
     def __init__(
         self,
         name: str,
-        func: Callable[[Path, dict[str, Any]], list[ValidationIssue]],
+        func: Callable[[ValidationFile, dict[str, Any]], list[ValidationIssue]],
         default_enabled: bool = True,
         default_severity: Severity | None = None,
         default_params: dict[str, Any] | None = None,
@@ -73,7 +91,9 @@ class Rule:
         self.default_severity = default_severity
         self.default_params = default_params or {}
 
-    def run(self, path: Path, config: dict[str, Any]) -> list[ValidationIssue]:
+    def run(
+        self, file: ValidationFile, config: dict[str, Any]
+    ) -> list[ValidationIssue]:
         """Run the check of the rule (if active)."""
         rule_config = config.get("rules", {}).get(self.name, {})
         enabled = rule_config.get("enabled", self.default_enabled)
@@ -84,7 +104,7 @@ class Rule:
         params = {**self.default_params, **rule_config.get("params", {})}
         severity_override = rule_config.get("severity", self.default_severity)
 
-        issues = self.func(path, params)
+        issues = self.func(file, params)
 
         # Patch severity if necessary
         if severity_override:
@@ -126,9 +146,24 @@ class RuleRegistry:
 
     def run_all(self, path: Path, config: dict[str, Any]) -> CheckResult:
         """Run a check of all registered rules."""
+        try:
+            validation_file = ValidationFile(path)
+        except Exception as err:
+            return CheckResult(
+                path,
+                issues=[
+                    ValidationIssue(
+                        path,
+                        code=IssueCode.FILE_PARSING_ERROR,
+                        message=str(err),
+                        severity=Severity.ERROR,
+                    )
+                ],
+            )
+
         result = CheckResult(path)
         for rule in self.rules.values():
-            for issue in rule.run(path, config):
+            for issue in rule.run(validation_file, config):
                 result.issues.append(issue)
 
         return result
