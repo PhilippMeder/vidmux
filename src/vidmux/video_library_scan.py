@@ -3,6 +3,7 @@
 import csv
 from pathlib import Path
 
+from vidmux.media import get_canonical_name, get_media_from_filename
 from vidmux.filesystem import JSONFile, JSONTypes
 from vidmux.video_inspection import (
     get_audio_tracks,
@@ -40,9 +41,9 @@ def get_languages_tag(audio_tracks: list, undefined_language: str = "??") -> str
 
     language_tag = None
     if len(languages) == 1:
-        language_tag = f"[{languages.pop()}]"
+        language_tag = f"{languages.pop()}"
     elif len(languages) > 1:
-        language_tag = "[" + "+".join(languages) + "]"
+        language_tag = "+".join(languages)
 
     return language_tag
 
@@ -75,7 +76,7 @@ def get_resolution_tag(video_tracks: list) -> str | None:
     # Get scan type
     scan_type = "i" if field_order.lower() in {"tt", "bb", "tb", "bt"} else "p"
 
-    return f"[{base}{scan_type}]"
+    return f"{base}{scan_type}"
 
 
 def suggest_name_tags(report: dict, undefined_language: str = "??") -> list[str]:
@@ -102,65 +103,20 @@ def suggest_name(report: dict, undefined_language: str = "??") -> str:
     tags = suggest_name_tags(report, undefined_language=undefined_language)
 
     # Get basename and guess version (if provided)
-    basename = extract_basename_from_filename(filename, parent.name, tags)
-    guessed_version = extract_version_from_filename(filename, basename, tags)
+    media_object = get_media_from_filename(filename)
+    canonical_name = get_canonical_name(media_object, additional_tags=tags)
 
-    # Construct new filename
-    parts = [guessed_version] if guessed_version else []
-    parts.extend(tags)
-    suffix = (" - " + " ".join(parts)) if parts else ""
+    print(filename, media_object, canonical_name)
 
-    new_filename = f"{basename}{suffix}{extension}"
+    new_filename = f"{canonical_name.filename}{extension}"
 
     # Check whether a subfolder has to be created
-    if parent.name == basename:
+    if parent.name == canonical_name.directory:
         new_path = parent / new_filename
     else:
-        new_path = parent / basename / new_filename
+        new_path = parent / canonical_name.directory / new_filename
 
     return str(new_path)
-
-
-def extract_basename_from_filename(
-    filename: str, parentname: str, tags: list[str]
-) -> str:
-    """
-    Extract the basename from filename given a list of tags.
-
-    Note:
-    This is the bottleneck. Good filenames and structures as an input are recommended.
-    """
-    # Delete tags from filename
-    clean_name = filename
-    for tag in tags:
-        clean_name = clean_name.replace(tag, "")
-    # Delete additional information separated by " - "
-    clean_name = clean_name.strip()
-    if (separator := " - ") in clean_name:
-        parts = clean_name.split(separator)
-        # If the separated part is in the directory name, treat it as part of the name
-        if parts[-1] not in parentname:
-            return separator.join(parts[:-1]).strip()
-
-    return clean_name
-
-
-def extract_version_from_filename(filename: str, basename: str, tags: list[str]) -> str:
-    """Extract the version name."""
-    remainder = filename.removeprefix(basename).strip()
-    if remainder.startswith("-"):
-        remainder = remainder[1:].strip()
-
-    # Delete tags from filename
-    for tag in tags:
-        remainder = remainder.replace(tag, "").strip()
-
-    # Treat remainder as version name
-    if remainder:
-        remainder = remainder.strip(" []")  # Strip old brackets
-        return f"[{remainder}]"
-
-    return ""
 
 
 def make_track_entries(tracks: list) -> list:
