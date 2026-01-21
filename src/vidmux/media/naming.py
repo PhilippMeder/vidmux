@@ -3,6 +3,11 @@
 from dataclasses import dataclass
 
 from vidmux.media.models import BaseMedia, Episode, Movie
+from vidmux.media.version_tags import (
+    VersionTagOptions,
+    VersionTags,
+    DEFAULT_VERSION_TAG_OPTIONS,
+)
 
 
 @dataclass
@@ -14,28 +19,16 @@ class CanonicalName:
     version_tokens: list[str]
 
 
-@dataclass
-class NamingOptions:
-    """Provide options for media naming."""
-
-    include_audio: bool = False
-    include_editions: bool = True
-    include_languages: bool = True
-    include_misc: bool = False
-    include_resolution: bool = True
-
-
-DEFAULT_NAMING_OPTIONS = NamingOptions()
-
-
 class FilenameCreator:
     """Creator for media filenames based on the media information."""
+
+    tag_filter = VersionTags()
 
     def __call__(
         self,
         media: BaseMedia,
         additional_tags: list[str] | None = None,
-        options: NamingOptions = DEFAULT_NAMING_OPTIONS,
+        options: VersionTagOptions = DEFAULT_VERSION_TAG_OPTIONS,
     ) -> CanonicalName:
         """Create filename according to media information."""
         return self.create(media, additional_tags=additional_tags, options=options)
@@ -44,7 +37,7 @@ class FilenameCreator:
         self,
         media: BaseMedia,
         additional_tags: list[str] | None = None,
-        options: NamingOptions = DEFAULT_NAMING_OPTIONS,
+        options: VersionTagOptions = DEFAULT_VERSION_TAG_OPTIONS,
     ) -> CanonicalName | None:
         """Create filename according to media information."""
         if not additional_tags:
@@ -69,7 +62,7 @@ class FilenameCreator:
         return basename
 
     def _get_version(
-        self, media: BaseMedia, additional_tags: list[str], options: NamingOptions
+        self, media: BaseMedia, additional_tags: list[str], options: VersionTagOptions
     ) -> tuple[str, list[str]]:
         """Create the version string for a media object."""
         # tokens = set(media.version_tokens + additional_tags)
@@ -79,7 +72,8 @@ class FilenameCreator:
             if tag not in tokens:
                 tokens.append(tag)
 
-        # TODO: Insert logic to take care of options
+        # Filter tags according to options
+        tokens = self.tag_filter.get_filtered_tags(tokens, options=options)
 
         if not tokens:
             return "", []
@@ -90,7 +84,7 @@ class FilenameCreator:
         self,
         media: Movie,
         additional_tags: list[str],
-        options: NamingOptions,
+        options: VersionTagOptions,
     ) -> CanonicalName:
         """Create filename for a movie."""
         basename = self._get_base_title(media)
@@ -110,7 +104,7 @@ class FilenameCreator:
         self,
         media: Episode,
         additional_tags: list[str],
-        options: NamingOptions,
+        options: VersionTagOptions,
     ) -> CanonicalName:
         """Create filename for an episode."""
         basename = self._get_base_title(media)
@@ -135,7 +129,7 @@ DEFAULT_CREATOR = FilenameCreator()
 def get_canonical_name(
     media: BaseMedia,
     additional_tags: list[str] | None = None,
-    options: NamingOptions = DEFAULT_NAMING_OPTIONS,
+    options: VersionTagOptions = DEFAULT_VERSION_TAG_OPTIONS,
 ) -> CanonicalName:
     """Create a canonical name from a media object.."""
 
