@@ -1,8 +1,12 @@
 """Provide tools for version tags."""
 
+import logging
 from dataclasses import dataclass
 from collections import defaultdict
 from enum import Enum, auto
+
+
+logger = logging.getLogger("vidmux")
 
 
 class TagCategory(Enum):
@@ -24,6 +28,16 @@ DEFAULT_TAG_ORDER = [
     TagCategory.AUDIO,
     TagCategory.MISC,
 ]
+
+
+CATEGORY_MAX_COUNTS: dict[TagCategory, int | None] = {
+    TagCategory.RESOLUTION: 1,
+    TagCategory.ORIGIN: 1,
+    TagCategory.EDITION: 1,
+    TagCategory.LANGUAGE: None,
+    TagCategory.AUDIO: None,
+    TagCategory.MISC: None,
+}
 
 
 @dataclass
@@ -152,6 +166,25 @@ class VersionTags:
         for category in ordered_categories:
             if not options.category_enabled(category):
                 continue
-            result.extend(groups.get(category, []))
+            category_tags = groups.get(category, [])
+            self.validate_category_tags(category, category_tags)
+            result.extend(category_tags)
 
         return result
+
+    @staticmethod
+    def validate_category_tags(
+        category: TagCategory,
+        tags: list[str],
+    ) -> None:
+        """Issue a warning if the number of tags exceeds the category limit."""
+        max_count = CATEGORY_MAX_COUNTS.get(category)
+        if max_count is None:
+            return
+
+        if (n_tags := len(tags)) > max_count:
+            msg = (
+                f"Multiple {category.name.lower()} tags provided ({tags}, n={n_tags}); "
+                f"expected at most {max_count}"
+            )
+            logger.warning(msg)
