@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from collections import defaultdict
 from enum import Enum, auto
 
+from vidmux.languages import LANGUAGES_ISO_639_1
+
 
 logger = logging.getLogger("vidmux")
 
@@ -89,7 +91,7 @@ class VersionTags:
         "theatrical cut",
     )
     # Language abbreviations according to ISO 639-1
-    _languages = ("en", "de", "fr")
+    _languages = LANGUAGES_ISO_639_1
     _origins = (
         "bd",
         "bluray",
