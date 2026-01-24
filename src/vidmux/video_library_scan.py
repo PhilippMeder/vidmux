@@ -6,10 +6,8 @@ from pathlib import Path
 from vidmux.media import get_canonical_name, get_media_from_filename
 from vidmux.filesystem import JSONFile, JSONTypes
 from vidmux.video_inspection import (
-    get_audio_tracks,
-    get_format,
-    get_subtitles,
-    get_video_tracks,
+    get_file_info,
+    group_streams_by_types,
 )
 
 
@@ -172,13 +170,18 @@ def scan_video_library(
             file = root / filename
             if file.suffix in extensions:
                 print(f"Inspecting '{filename}'...")
-                video_tracks = get_video_tracks(file)
-                audio_tracks = get_audio_tracks(file)
-                subtitles = get_subtitles(file)
+
+                info = get_file_info(file, stream_type="all", include_format=True)
+                tracks = group_streams_by_types(info.get("streams", []))
+                video_tracks = tracks["video"]
+                audio_tracks = tracks["audio"]
+                subtitles = tracks["subtitle"]
+                container = info.get("format", {}).get("format_name", "")
+
                 results.append(
                     {
                         "filename": str(file.relative_to(library_path)),
-                        "container": get_format(file),
+                        "container": container,
                         "video_tracks": make_track_entries(video_tracks),
                         "audio_tracks": make_track_entries(audio_tracks),
                         "subtitle_tracks": make_track_entries(subtitles),
