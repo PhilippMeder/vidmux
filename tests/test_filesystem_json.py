@@ -1,7 +1,6 @@
 """Provide tests for the filesystem operations."""
 
 import json
-from enum import Enum
 from pathlib import Path
 
 import pytest
@@ -80,7 +79,7 @@ def test_from_dict_missing_required_fields(missing_key) -> None:
     with pytest.raises(ValueError) as excinfo:
         JSONFile.from_dict(_example_dict)
 
-    assert f"Missing required field" in str(excinfo.value)
+    assert "Missing required field" in str(excinfo.value)
 
 
 def test_save_creates_file(jsonfile_instance, tmp_path) -> None:

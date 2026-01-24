@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from vidmux.library_structure.core import run_validation
-from vidmux.library_structure import rules
+from vidmux.library_structure import rules  # noqa: F401
 
 
 def save_json(results: list[dict], path: Path) -> None:

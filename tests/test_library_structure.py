@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from vidmux.library_structure import registry, load_default_rules, run_validation
+from vidmux.library_structure import load_default_rules, run_validation
 
 MOVIES = {
     "Example Movie A/Example Movie A.mp4": ["MISSING_YEAR"],

@@ -9,8 +9,12 @@ from vidmux.renaming import JSONFile, JSONTypes, rename_files, rename_mode
 
 EXAMPLE_DATA = {
     "Example Movie (2000).mp4": "Example Movie (2000) - [EN] [1080p].mp4",
-    "Example Movie (2000)/Example Movie (2000).mp4": "Example Movie (2000)/Example Movie (2000) - [EN] [1080p].mp4",
-    "Example Movie/Example Movie (2000).mp4": "Example Movie (2000)/Example Movie (2000) - [EN] [1080p].mp4",
+    "Example Movie (2000)/Example Movie (2000).mp4": (
+        "Example Movie (2000)/Example Movie (2000) - [EN] [1080p].mp4"
+    ),
+    "Example Movie/Example Movie (2000).mp4": (
+        "Example Movie (2000)/Example Movie (2000) - [EN] [1080p].mp4"
+    ),
 }
 
 

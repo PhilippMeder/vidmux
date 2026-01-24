@@ -24,6 +24,7 @@ def extract_basename_from_filename(
         "extract_basename_from_filename is deprecated. "
         "Use FilenameParser and BaseMedia instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
 
     # Delete tags from filename
@@ -47,6 +48,7 @@ def extract_version_from_filename(filename: str, basename: str, tags: list[str])
         "extract_version_from_filename is deprecated. "
         "Use FilenameParser and BaseMedia instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
 
     remainder = filename.removeprefix(basename).strip()
@@ -71,6 +73,7 @@ def suggest_name(report: dict, undefined_language: str = "??") -> str:
         "This version of suggest_name is deprecated. "
         "Use BaseMedia and FilenameCreator instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
 
     original_path = Path(report["filename"])

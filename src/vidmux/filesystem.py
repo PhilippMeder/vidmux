@@ -1,10 +1,16 @@
 """Tools to standardize writing and reading data."""
 
-import csv
 import json
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+
+class JSONTypes(Enum):
+
+    NOT_SPECIFIED = "type-not-specified"
+    RENAMING_MAPPING = "vidmux-renaming-mapping"
+    SCAN_REPORT = "vidmux-scan-report"
 
 
 class InvalidJSONFileTypeError(ValueError):
@@ -17,13 +23,6 @@ class InvalidJSONFileTypeError(ValueError):
         if reason:
             msg += f" Reason: {reason}"
         super().__init__(msg)
-
-
-class JSONTypes(Enum):
-
-    NOT_SPECIFIED = "type-not-specified"
-    RENAMING_MAPPING = "vidmux-renaming-mapping"
-    SCAN_REPORT = "vidmux-scan-report"
 
 
 class JSONFile:
@@ -64,11 +63,11 @@ class JSONFile:
         _type_raw = dictionary.get("_type", JSONTypes.NOT_SPECIFIED.value)
         try:
             file_type = JSONTypes(_type_raw)
-        except ValueError:
+        except ValueError as err:
             raise ValueError(
                 f"Invalid '_type': '{_type_raw}'. "
                 f"Must be one of: {[valid_type.value for valid_type in JSONTypes]}"
-            )
+            ) from err
 
         # If ensure type is specified, check if the file type is correct
         if ensure_type is not None and file_type != ensure_type:
@@ -79,7 +78,7 @@ class JSONFile:
             associated_path = dictionary["associated_path"]
             content = dictionary["content"]
         except KeyError as err:
-            raise ValueError(f"Missing required field in JSON: {err.args[0]}")
+            raise ValueError(f"Missing required field in JSON: {err.args[0]}") from err
 
         # Create and return the class instance
         return cls(
