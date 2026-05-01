@@ -1,16 +1,18 @@
 """Define the rules used in the validation process."""
 
 from vidmux.library_structure.core import (
-    registry,
     IssueCode,
+    Severity,
     ValidationFile,
     ValidationIssue,
-    Severity,
+    registry,
 )
 
 
 @registry.register(default_severity=Severity.WARNING)
-def check_file_in_correct_folder(file: ValidationFile, params) -> list[ValidationIssue]:
+def check_file_in_correct_folder(
+    file: ValidationFile, params: dict
+) -> list[ValidationIssue]:
     """Check whether the file is in the correct subfolder."""
     issues = []
 
@@ -40,7 +42,9 @@ def check_file_in_correct_folder(file: ValidationFile, params) -> list[Validatio
     default_severity=Severity.ERROR,
     default_params={"bad_chars": r'<>:"/\\|?*'},
 )
-def check_for_bad_characters(file: ValidationFile, params) -> list[ValidationIssue]:
+def check_for_bad_characters(
+    file: ValidationFile, params: dict
+) -> list[ValidationIssue]:
     """Check whether the filename contains illegal characters."""
     path = file.path
 
@@ -60,7 +64,7 @@ def check_for_bad_characters(file: ValidationFile, params) -> list[ValidationIss
 
 
 @registry.register(default_severity=Severity.WARNING)
-def check_year_in_filename(file: ValidationFile, params) -> list[ValidationIssue]:
+def check_year_in_filename(file: ValidationFile, params: dict) -> list[ValidationIssue]:
     """Check whether a year (YYYY) is given in the filename."""
     issues = []
     if not file.media.year:

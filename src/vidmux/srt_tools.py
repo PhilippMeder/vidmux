@@ -22,8 +22,7 @@ def timestamp_to_milliseconds(
 
 def timestamp_from_milliseconds(total_ms: int) -> str:
     """Create timestamp from ms."""
-    if total_ms < 0:
-        total_ms = 0
+    total_ms = max(total_ms, 0)
     ms = total_ms % 1000
     total_s = total_ms // 1000
     s = total_s % 60
@@ -47,9 +46,9 @@ def shift_line(re_match: re.Match, shift_ms: int) -> str:
 
 def process_text(text: str, shift_seconds: float) -> tuple[str, int]:
     """Shift all timestamps in the text."""
-    shift_ms = int(round(shift_seconds * 1000))
+    shift_ms = round(shift_seconds * 1000, ndigits=None)  # Integer conversion
 
-    def repl(re_match: re.Match):
+    def repl(re_match: re.Match) -> str:
         """Return the shifted timestamp line."""
         return shift_line(re_match, shift_ms)
 
@@ -64,7 +63,7 @@ def process_file(
     inplace: bool = True,
     output_file: str | Path | None = None,
     show_count: bool = True,
-):
+) -> None:
     """Shift the timestamps of a file."""
     input_file = Path(input_file)
     if not input_file.exists():
@@ -87,16 +86,17 @@ def process_file(
                 f"Wrote {output_file} (backup: {backup_file}), "
                 f"changed timestamps: {count}"
             )
+        return
+
+    if output_file:
+        output_file = Path(output_file)
+        output_file.write_text(new_text, encoding="utf-8")
+        # Show number of changes
+        if show_count:
+            print(f"Wrote {output_file}, changed timestamps: {count}")
     else:
-        if output_file:
-            output_file = Path(output_file)
-            output_file.write_text(new_text, encoding="utf-8")
-            # Show number of changes
-            if show_count:
-                print(f"Wrote {output_file}, changed timestamps: {count}")
-        else:
-            # No outfile -> stdout
-            print(new_text)
-            # Show number of changes
-            if show_count:
-                print(f"\nChanged timestamps: {count}")
+        # No outfile -> stdout
+        print(new_text)
+        # Show number of changes
+        if show_count:
+            print(f"\nChanged timestamps: {count}")

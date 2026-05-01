@@ -7,7 +7,7 @@ only for migration and comparison purposes.
 import re
 from pathlib import Path
 
-from vidmux.library_structure.core import registry, IssueCode, ValidationIssue, Severity
+from vidmux.library_structure.core import IssueCode, Severity, ValidationIssue, registry
 
 
 def normalize_name(name: str) -> str:
@@ -36,7 +36,7 @@ def is_file_in_separate_folder(path: Path) -> bool:
 
 
 @registry.register(default_severity=Severity.WARNING)
-def check_file_in_own_folder(path: Path, params) -> list[ValidationIssue]:
+def check_file_in_own_folder(path: Path, params: dict) -> list[ValidationIssue]:
     """Check whether the file is in its own subfolder."""
     issues = []
 
@@ -56,10 +56,10 @@ def check_file_in_own_folder(path: Path, params) -> list[ValidationIssue]:
 @registry.register(
     default_severity=Severity.WARNING,
     default_params={
-        "allowed_suffixes": r"(\s*[-–]\s*[A-Za-z0-9 ]+|\s*\[[A-Za-z0-9+\- ]+\])$"
+        "allowed_suffixes": r"(\s*[-–]\s*[A-Za-z0-9 ]+|\s*\[[A-Za-z0-9+\- ]+\])$"  # noqa: RUF001
     },
 )
-def check_filename_matches_folder(path: Path, params) -> list[ValidationIssue]:
+def check_filename_matches_folder(path: Path, params: dict) -> list[ValidationIssue]:
     """Check whether file and folder name match."""
     issues = []
 
@@ -95,7 +95,7 @@ def check_filename_matches_folder(path: Path, params) -> list[ValidationIssue]:
     default_severity=Severity.ERROR,
     default_params={"bad_chars": r'<>:"/\\|?*'},
 )
-def check_for_bad_characters(path: Path, params) -> list[ValidationIssue]:
+def check_for_bad_characters(path: Path, params: dict) -> list[ValidationIssue]:
     """Check whether the filename contains illegal characters."""
     bad_chars = set(params["bad_chars"])
     found = sorted({char for char in path.name if char in bad_chars})
@@ -113,7 +113,7 @@ def check_for_bad_characters(path: Path, params) -> list[ValidationIssue]:
 
 
 @registry.register(default_severity=Severity.WARNING)
-def check_year_in_filename(path: Path, params) -> list[ValidationIssue]:
+def check_year_in_filename(path: Path, params: dict) -> list[ValidationIssue]:
     """Check whether a year (YYYY) is given in the filename."""
     issues = []
     if not re.search(r"\(\d{4}\)", path.stem):

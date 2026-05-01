@@ -1,12 +1,11 @@
 """Provide tools for version tags."""
 
 import logging
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
 from enum import Enum, auto
 
 from vidmux.languages import LANGUAGES_ISO_639_1
-
 
 logger = logging.getLogger("vidmux")
 
@@ -71,7 +70,8 @@ class VersionTagOptions:
             case TagCategory.RESOLUTION:
                 return self.include_resolution
             case _:
-                raise ValueError(f"Unknown TagCategory: {category}")
+                msg = f"Unknown TagCategory: {category}"
+                raise ValueError(msg)
 
 
 DEFAULT_VERSION_TAG_OPTIONS = VersionTagOptions()
@@ -131,7 +131,7 @@ class VersionTags:
         lowered = tag.lower()
         # TODO: Implement audio
         # if self.is_audio(lowered):
-        #     return TagCategory.AUDIO
+        #     return TagCategory.AUDIO  # noqa: ERA001
         if self.is_edition(lowered):
             return TagCategory.EDITION
         if self.is_language(lowered):

@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-import vidmux.srt_tools as srt_tools
+from vidmux import srt_tools
 from vidmux.language_tools import set_languages
 from vidmux.library_structure import scan_library_structure
 from vidmux.mux_audio_tracks import mux_audio_tracks

@@ -20,7 +20,8 @@ def get_file_info(
         "none" = no streams
     """
     if stream_type and stream_type not in ("all", "none", "a", "v", "s"):
-        raise ValueError("Invalid stream_type. Must be 'all', 'none', 'a', 'v' or 's'.")
+        msg = "Invalid stream_type. Must be 'all', 'none', 'a', 'v' or 's'."
+        raise ValueError(msg)
 
     # Create ffprobe command
     # TODO: Maybe use -show-entries to only read out interesting entries (speed!)
@@ -41,13 +42,14 @@ def get_file_info(
 
     # Run ffprobe
     # TODO: Better error handling
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     try:
         info = json.loads(result.stdout)
-        return info
     except json.JSONDecodeError:
         # TODO: log warning
-        return {}
+        info = {}
+
+    return info
 
 
 def get_format(file_path: Path) -> str:
@@ -57,7 +59,7 @@ def get_format(file_path: Path) -> str:
     return info.get("format", {}).get("format_name", "")
 
 
-def get_streams(file_path: Path, stream_type: str):
+def get_streams(file_path: Path, stream_type: str) -> list:
     """
     Extract media streams using ffprobe (ffmpeg).
 
@@ -86,24 +88,24 @@ def group_streams_by_types(streams: list[dict]) -> dict[str, list]:
     return grouped_streams
 
 
-def get_all_tracks(file_path: Path):
+def get_all_tracks(file_path: Path) -> dict[str, list]:
     """Extract audio, subtitle and video tracks using ffprobe (ffmpeg)."""
     streams = get_streams(file_path, "all")
 
     return group_streams_by_types(streams)
 
 
-def get_audio_tracks(file_path: Path):
+def get_audio_tracks(file_path: Path) -> list:
     """Extract audio tracks using ffprobe (ffmpeg)."""
     return get_streams(file_path, "a")
 
 
-def get_subtitles(file_path: Path):
+def get_subtitles(file_path: Path) -> list:
     """Extract subtitles using ffprobe (ffmpeg)."""
     return get_streams(file_path, "s")
 
 
-def get_video_tracks(file_path: Path):
+def get_video_tracks(file_path: Path) -> list:
     """Extract video tracks using ffprobe (ffmpeg)."""
     return get_streams(file_path, "v")
 

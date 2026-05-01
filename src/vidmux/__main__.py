@@ -12,7 +12,7 @@ def ensure_ffmpeg() -> None:
         sys.exit("Error: FFmpeg not found. Please install it and ensure it is in PATH.")
 
 
-def main():
+def main() -> None:
     """Entry point for "vidmux"and "python -m vidmux"."""
     ensure_ffmpeg()
     cli_mode()

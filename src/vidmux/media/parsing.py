@@ -4,7 +4,6 @@ import re
 
 from vidmux.media.models import BaseMedia, Episode, Movie
 
-
 MOVIE_PATTERN = re.compile(
     r"""
     ^
@@ -186,8 +185,8 @@ class FilenameParser:
             return []
 
         # The regex search returns tuples (in_brackets, not_in_brackets) where one of
-        # the values is always empty, e.g. "[Extended Version] EN" will return
-        # [("Extended Version", ""), ("", "EN")]
+        # the values is always empty, e.g.
+        # "[Extended Version] EN" will return [("Extended Version", ""), ("", "EN")]
         return [
             in_brackets or not_in_brackets
             for in_brackets, not_in_brackets in VERSION_TOKEN_PATTERN.findall(version)
@@ -207,7 +206,6 @@ class FilenameParser:
     @staticmethod
     def _optional_to_int(value: str | int | None) -> int | None:
         """Return an integer conversion of the given value if it has a truth value."""
-
         return int(value) if value else None
 
 
@@ -216,5 +214,4 @@ DEFAULT_PARSER = FilenameParser()
 
 def get_media_from_filename(filename: str) -> Episode | Movie | None:
     """Parse a media filename and return a Movie, Episode or None."""
-
     return DEFAULT_PARSER.parse(filename)

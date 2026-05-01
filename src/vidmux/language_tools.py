@@ -13,8 +13,8 @@ def build_ffmpeg_language_command(
     output_file: Path,
     audio_languages: list[str],
     subtitle_languages: list[str],
-    audio_titles: list[str] = None,
-    subtitle_titles: list[str] = None,
+    audio_titles: list[str] | None = None,
+    subtitle_titles: list[str] | None = None,
 ) -> list[str]:
     """Build command to set track languages using ffmpeg."""
     command = ["ffmpeg", "-i", str(input_file), "-map", "0", "-c", "copy"]
@@ -39,10 +39,11 @@ def set_languages(
     output_file: Path,
     audio_languages: list[str],
     subtitle_languages: list[str],
-    audio_titles: list[str] = None,
-    subtitle_titles: list[str] = None,
+    audio_titles: list[str] | None = None,
+    subtitle_titles: list[str] | None = None,
     dry_run: bool = False,
-):
+) -> None:
+    """Set languages according to inputs."""
     audio_streams = get_audio_tracks(input_file)
     subtitle_streams = get_subtitles(input_file)
 
@@ -75,4 +76,4 @@ def set_languages(
     print(" ".join(shlex.quote(part) for part in command))
 
     if not dry_run:
-        subprocess.run(command)
+        subprocess.run(command, check=False)

@@ -121,11 +121,14 @@ select = [
 
 ignore = [
     # documentation
-    "D203", # incompatible with D211
-    "D213", # numpy style prefers D212
+    "D203",     # incompatible with D211
+    "D213",     # numpy style prefers D212
 
     # magic value findings (resolution check uses plain numbers)
     "PLR2004",
+
+    # temporary
+    "PLR0913",  # too many arguments should be fixed by increasing the number or adding config classes
 ]
 
 fixable = [
@@ -156,6 +159,12 @@ unfixable = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/vidmux/library_structure/rules.py" = [
+    "ARG001",   # need to ensure consistent structure for rules even when not all arguments are used
+]
+"src/vidmux/_legacy/library_structure_rules.py" = [
+    "ARG001",   # need to ensure consistent structure for rules even when not all arguments are used
+]
 # Ignore some rules for tests
 "tests/**/*.py" = [
     "ANN001",   # don't require annotations, esp. for pytest fixtures

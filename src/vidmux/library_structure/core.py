@@ -1,9 +1,10 @@
 """Define core features for the validation, esp. issues and validation results."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Any
+from typing import Any
 
 from vidmux.media import (
     BaseMedia,
@@ -14,12 +15,16 @@ from vidmux.media import (
 
 
 class Severity(Enum):
+    """Provide severity."""
+
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"
 
 
 class IssueCode(Enum):
+    """Provide issue types."""
+
     FILE_AND_FOLDER_NAME_DIFFER = "Filename differs from folder"
     FILE_NOT_IN_FOLDER = "File not in its own folder"
     FILE_PARSING_ERROR = "File could not be parsed according to the naming conventions"
@@ -39,6 +44,8 @@ class ValidationFile:
 
 @dataclass
 class ValidationIssue:
+    """Provide validation issues."""
+
     path: str
     code: IssueCode
     message: str
@@ -57,6 +64,8 @@ class ValidationIssue:
 
 @dataclass
 class CheckResult:
+    """Provide check results."""
+
     path: Path
     issues: list[ValidationIssue] = field(default_factory=list)
 
@@ -84,7 +93,7 @@ class Rule:
         default_enabled: bool = True,
         default_severity: Severity | None = None,
         default_params: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         self.name = name
         self.func = func
         self.default_enabled = default_enabled
@@ -117,7 +126,7 @@ class Rule:
 class RuleRegistry:
     """Save registered rules for checking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.rules: dict[str, Rule] = {}
 
     def register(
@@ -126,10 +135,10 @@ class RuleRegistry:
         default_enabled: bool = True,
         default_severity: Severity | None = None,
         default_params: dict[str, Any] | None = None,
-    ):
+    ) -> Callable:
         """Register a rule."""
 
-        def decorator(func):
+        def decorator(func: Callable) -> Callable:
             """Allow decorator syntax to register rules."""
             rule_name = name or func.__name__
             self.rules[rule_name] = Rule(

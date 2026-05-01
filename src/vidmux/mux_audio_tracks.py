@@ -1,15 +1,13 @@
 """Tools to mux audio tracks."""
 
-import subprocess
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
 
-def mux_audio_tracks(output_file, inputs, dry_run: bool = False) -> None:
-    """
-    Execute the 'mux-audio-tracks' command using FFmpeg.
-    """
+def mux_audio_tracks(output_file: Path, inputs: list, dry_run: bool = False) -> None:
+    """Execute the 'mux-audio-tracks' command using FFmpeg."""
     if len(inputs) < 2:
         sys.exit("Error: Need at least one input file and language code.")
 
@@ -41,9 +39,9 @@ def mux_audio_tracks(output_file, inputs, dry_run: bool = False) -> None:
             input_args += ["-i", input_file]
             map_args += ["-map", f"{cmd_idx}:a:0"]
 
-        metadata_args += ["-metadata:s:a:%d" % cmd_idx, f"language={lang}"]
+        metadata_args += [f"-metadata:s:a:{cmd_idx}", f"language={lang}"]
         if title:
-            metadata_args += ["-metadata:s:a:%d" % cmd_idx, f"title={title}"]
+            metadata_args += [f"-metadata:s:a:{cmd_idx}", f"title={title}"]
 
         cmd_idx += 1
 

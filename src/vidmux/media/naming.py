@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 from vidmux.media.models import BaseMedia, Episode, Movie
 from vidmux.media.version_tags import (
+    DEFAULT_VERSION_TAG_OPTIONS,
     VersionTagOptions,
     VersionTags,
-    DEFAULT_VERSION_TAG_OPTIONS,
 )
 
 
@@ -65,7 +65,7 @@ class FilenameCreator:
         self, media: BaseMedia, additional_tags: list[str], options: VersionTagOptions
     ) -> tuple[str, list[str]]:
         """Create the version string for a media object."""
-        # tokens = set(media.version_tokens + additional_tags)
+        # Does not preserve order: tokens = set(media.version_tokens + additional_tags)
         # This way we preserve the tag order
         tokens = media.version_tokens
         for tag in additional_tags:
@@ -131,8 +131,7 @@ def get_canonical_name(
     additional_tags: list[str] | None = None,
     options: VersionTagOptions = DEFAULT_VERSION_TAG_OPTIONS,
 ) -> CanonicalName:
-    """Create a canonical name from a media object.."""
-
+    """Create a canonical name from a media object."""
     return DEFAULT_CREATOR.create(
         media, additional_tags=additional_tags, options=options
     )

@@ -3,8 +3,8 @@
 import csv
 from pathlib import Path
 
-from vidmux.media import get_canonical_name, get_media_from_filename
 from vidmux.filesystem import JSONFile, JSONTypes
+from vidmux.media import get_canonical_name, get_media_from_filename
 from vidmux.video_inspection import (
     get_file_info,
     group_streams_by_types,
@@ -154,7 +154,7 @@ def show_track_entries(
         language = track["language"]
         codec = track["codec"]
         title = track["title"]
-        output(f"\t{name.capitalize()} {idx+1}: {language=}, {codec=}, {title=}")
+        output(f"\t{name.capitalize()} {idx + 1}: {language=}, {codec=}, {title=}")
 
 
 def scan_video_library(
@@ -193,7 +193,7 @@ def scan_video_library(
 
 def save_csv(results: list[dict], path: Path) -> None:
     """Save results to a CSV file."""
-    with open(path, "w", newline="", encoding="utf-8") as file:
+    with path.open(mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["filename", "type", "index", "language", "codec", "title"])
         for entry in results:

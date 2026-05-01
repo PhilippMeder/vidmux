@@ -1,3 +1,5 @@
+"""Provide language abbreviations."""
+
 # Language abbreviations according to ISO 639-1
 LANGUAGES_ISO_639_1 = (
     "aa",

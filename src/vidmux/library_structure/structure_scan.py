@@ -4,13 +4,13 @@ import csv
 import json
 from pathlib import Path
 
-from vidmux.library_structure.core import run_validation
 from vidmux.library_structure import rules  # noqa: F401
+from vidmux.library_structure.core import run_validation
 
 
 def save_json(results: list[dict], path: Path) -> None:
     """Save results to a JSON file."""
-    with open(path, "w", encoding="utf-8") as file:
+    with path.open(mode="w", encoding="utf-8") as file:
         json.dump(results, file, indent=2, ensure_ascii=False)
 
     print(f"Saved JSON: {path}")
@@ -18,7 +18,7 @@ def save_json(results: list[dict], path: Path) -> None:
 
 def save_csv(results: list[dict], path: Path) -> None:
     """Save results to a CSV file."""
-    with open(path, "w", newline="", encoding="utf-8") as file:
+    with path.open(mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["filename", "type", "code", "description", "message"])
         for report in results:

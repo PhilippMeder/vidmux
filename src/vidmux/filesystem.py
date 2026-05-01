@@ -7,6 +7,7 @@ from typing import Any
 
 
 class JSONTypes(Enum):
+    """Provide types for json files, e.g. report."""
 
     NOT_SPECIFIED = "type-not-specified"
     RENAMING_MAPPING = "vidmux-renaming-mapping"
@@ -26,11 +27,12 @@ class InvalidJSONFileTypeError(ValueError):
 
 
 class JSONFile:
+    """JSON file with necessary methods."""
 
     def __init__(
         self,
         associated_path: Path | str,
-        content: Any,
+        content: Any,  # noqa: ANN401
         file_type: JSONTypes = JSONTypes.NOT_SPECIFIED,
         version: str = "1.0",
         description: str | None = None,
@@ -64,10 +66,11 @@ class JSONFile:
         try:
             file_type = JSONTypes(_type_raw)
         except ValueError as err:
-            raise ValueError(
+            msg = (
                 f"Invalid '_type': '{_type_raw}'. "
                 f"Must be one of: {[valid_type.value for valid_type in JSONTypes]}"
-            ) from err
+            )
+            raise ValueError(msg) from err
 
         # If ensure type is specified, check if the file type is correct
         if ensure_type is not None and file_type != ensure_type:
@@ -78,7 +81,8 @@ class JSONFile:
             associated_path = dictionary["associated_path"]
             content = dictionary["content"]
         except KeyError as err:
-            raise ValueError(f"Missing required field in JSON: {err.args[0]}") from err
+            msg = f"Missing required field in JSON: {err.args[0]}"
+            raise ValueError(msg) from err
 
         # Create and return the class instance
         return cls(
@@ -92,24 +96,24 @@ class JSONFile:
     def save(
         self,
         filepath: Path | str,
-        encoding="utf-8",
+        encoding: str = "utf-8",
         indent: int = 2,
         ensure_ascii: bool = False,
     ) -> None:
         """Save content to a JSON file."""
-        with open(filepath, "w", encoding=encoding) as file:
+        with filepath.open(mode="w", encoding=encoding) as file:
             json.dump(self.as_dict(), file, indent=indent, ensure_ascii=ensure_ascii)
 
     @classmethod
     def load(
         cls,
         filepath: Path | str,
-        encoding="utf-8",
+        encoding: str = "utf-8",
         ensure_type: JSONTypes | None = None,
         type_reason: str | None = None,
     ) -> "JSONFile":
         """Load a JSON file and an instance of JSONFile with the content."""
-        with open(filepath, "r", encoding=encoding) as file:
+        with filepath.open(mode="r", encoding=encoding) as file:
             content = json.load(file)
 
         return cls.from_dict(content, ensure_type=ensure_type, type_reason=type_reason)
