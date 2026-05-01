@@ -158,6 +158,8 @@ unfixable = [
 [tool.ruff.lint.per-file-ignores]
 # Ignore some rules for tests
 "tests/**/*.py" = [
+    "ANN001",   # don't require annotations, esp. for pytest fixtures
+    "ERA001",   # keep commented-out code for dev testing
     "SIM117"    # nested contexts make it clearer to the reader what's happening
 ]
 

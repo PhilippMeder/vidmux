@@ -1,9 +1,8 @@
-""" "Provide tests for the library scan."""
+"""Provide tests for the library scan."""
 
 import pytest
 
 from vidmux.video_library_scan import suggest_name
-
 
 UNDEFINED_LANGUAGE = "EN"
 TEST_DATA = (
@@ -83,6 +82,7 @@ TEST_DATA = (
 
 @pytest.mark.parametrize("report", TEST_DATA)
 def test_suggest_name(report: dict) -> None:
+    """Test naming suggestions."""
     suggested_name = suggest_name(report, undefined_language=UNDEFINED_LANGUAGE)
 
     assert suggested_name == report["expected_filename"]

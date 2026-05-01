@@ -1,6 +1,6 @@
 """Tests for srt_tools."""
 
-import vidmux.srt_tools as srt_tools
+from vidmux import srt_tools
 
 
 def test_timestamp_conversion() -> None:

@@ -7,7 +7,6 @@ import pytest
 
 from vidmux.filesystem import InvalidJSONFileTypeError, JSONFile, JSONTypes
 
-
 # Example data
 EXAMPLE_DICT = {
     "_type": "vidmux-scan-report",
@@ -20,6 +19,7 @@ EXAMPLE_DICT = {
 
 @pytest.fixture
 def jsonfile_instance() -> JSONFile:
+    """Provide JSON file test fixture."""
     return JSONFile(
         associated_path="/some/path",
         content={"foo": "bar"},
@@ -90,8 +90,8 @@ def test_save_creates_file(jsonfile_instance, tmp_path) -> None:
     assert filepath.exists()
 
     # Check content
-    with open(filepath, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    with filepath.open(mode="r", encoding="utf-8") as file:
+        data = json.load(file)
 
     assert data["_type"] == "vidmux-scan-report"
     assert data["content"] == {"foo": "bar"}

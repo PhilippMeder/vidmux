@@ -2,7 +2,7 @@
 
 import pytest
 
-from vidmux.media import VersionTags, VersionTagOptions
+from vidmux.media import VersionTagOptions, VersionTags
 
 
 @pytest.fixture(scope="module")

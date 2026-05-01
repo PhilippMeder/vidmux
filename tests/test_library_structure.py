@@ -36,9 +36,10 @@ ALL_MEDIA = MOVIES | SHOWS  # Merge movies and shows
 
 @pytest.fixture(scope="module")
 def example_library(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Provide example library fixture."""
     tmp_path = tmp_path_factory.mktemp("library")
 
-    for name in ALL_MEDIA.keys():
+    for name in ALL_MEDIA:
         path = tmp_path / name
 
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -48,13 +49,13 @@ def example_library(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture(autouse=True, scope="module")
-def _load_default_rules():
+def _load_default_rules() -> None:
     """Automatically load default rules for this test module."""
     load_default_rules()
 
 
 @pytest.mark.parametrize("total_name,expected_codes", ALL_MEDIA.items())
-def test_library_issues(example_library, total_name, expected_codes):
+def test_library_issues(example_library, total_name, expected_codes) -> None:
     """Test each movie against expected validation results."""
     reports = run_validation(example_library.rglob("*.mp4"))
     file_name = total_name.split("/")[-1]

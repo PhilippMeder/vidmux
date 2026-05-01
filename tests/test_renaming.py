@@ -6,7 +6,6 @@ import pytest
 
 from vidmux.renaming import JSONFile, JSONTypes, rename_files, rename_mode
 
-
 EXAMPLE_DATA = {
     "Example Movie (2000).mp4": "Example Movie (2000) - [EN] [1080p].mp4",
     "Example Movie (2000)/Example Movie (2000).mp4": (
@@ -58,7 +57,7 @@ def test_renaming_mode(tmp_path) -> None:
     library_path = Path(tmp_path)
 
     # Create original files
-    for filename in EXAMPLE_DATA.keys():
+    for filename in EXAMPLE_DATA:
         filepath = library_path / filename
         filepath.parent.mkdir(parents=True, exist_ok=True)
         filepath.touch()
@@ -77,10 +76,10 @@ def test_renaming_mode(tmp_path) -> None:
 
     for old_name, new_name in EXAMPLE_DATA.items():
         new_file = library_path / new_name
-        assert not (
-            library_path / old_name
-        ).is_file(), f"Old file '{old_name}' still exists!"
+        assert not (library_path / old_name).is_file(), (
+            f"Old file '{old_name}' still exists!"
+        )
         assert new_file.is_file(), f"New file '{new_name}' does not exist!"
-        assert new_file.with_suffix(
-            new_file.suffix + ".bak"
-        ).is_file(), f"Backup file for '{old_name}' does not exist!"
+        assert new_file.with_suffix(new_file.suffix + ".bak").is_file(), (
+            f"Backup file for '{old_name}' does not exist!"
+        )
