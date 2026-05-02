@@ -1,6 +1,7 @@
 """Collection of CLI programs."""
 
 import argparse
+from importlib.metadata import version
 from pathlib import Path
 
 from vidmux import srt_tools
@@ -497,7 +498,19 @@ def main() -> None:
     for feature_parser in feature_parsers:
         feature_parser(subparsers, formatter_class=formatter_class)
 
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="store_true",
+        help="Show vidmux version and exit.",
+    )
+
     args = parser.parse_args()
+
+    if args.version:
+        vidmux_version = version("vidmux")
+        parser.exit(message=f"vidmux {vidmux_version}\n")
+
     match args.feature:
         case "lib-structure":
             scan_library_structure(
@@ -544,4 +557,4 @@ def main() -> None:
             )
         case _:
             parser.print_help()
-            parser.exit(message="Run again and specify a supported command.")
+            parser.exit(message="\nRun again and specify a supported command.\n")
