@@ -88,7 +88,7 @@ SHOW_PATTERN = re.compile(
 VERSION_TOKEN_PATTERN = re.compile(r"\[([^\]]+)\]|(\S+)")
 
 PART_PATTERN = re.compile(
-    r"(cd|dvd|part|pt|disc|disk)[ .\-_]?(\d+|[a-d])", re.IGNORECASE
+    r"^(cd|dvd|part|pt|disc|disk)[ .\-_]?(\d+|[a-d])$", re.IGNORECASE
 )
 
 
