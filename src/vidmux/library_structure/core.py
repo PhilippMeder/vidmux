@@ -157,7 +157,8 @@ class RuleRegistry:
         """Run a check of all registered rules."""
         try:
             validation_file = ValidationFile(path)
-        except Exception as err:
+        # TODO: convert parser exceptions into ValidationFileError
+        except Exception as err:  # noqa: BLE001 - parser failures are reported as validation issues
             return CheckResult(
                 path,
                 issues=[

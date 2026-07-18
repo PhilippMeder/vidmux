@@ -92,6 +92,7 @@ select = [
 
     # modern Python upgrades
     "UP",   # pyupgrade
+    "PTH",  # pathlib usage
 
     # code quality / simplification
     "B",    # bugbear
@@ -102,9 +103,13 @@ select = [
     # design / maintainability opinions
     "PL",   # pylint rules
     "TRY",  # exception handling
+    "BLE",  # blind exception catching
 
-    # filesystem / style preferences
-    "PTH",  # pathlib usage
+    # security
+    "S",    # Bandit security checks
+
+    # logging
+    "LOG",  # logging best practices
 
     # documentation
     "D",    # docstrings
@@ -169,12 +174,19 @@ unfixable = [
 "tests/**/*.py" = [
     "ANN001",   # don't require annotations, esp. for pytest fixtures
     "ERA001",   # keep commented-out code for dev testing
+    "S101",     # asserts are the idiomatic way to write pytest tests
     "SIM117"    # nested contexts make it clearer to the reader what's happening
 ]
 
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.pylint]
+max-args = 6
+max-branches = 15
+max-returns = 6
+max-statements = 50
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

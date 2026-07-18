@@ -20,9 +20,10 @@ def rename_files(base_path: Path, renaming_mapping: dict, backup: bool = True) -
 
         try:
             old_path.rename(new_path)
+        except Exception as err:  # noqa: BLE001 - batch operation must record all failures
+            report[old_name] = f"{type(err).__name__}: {err}"
+        else:
             report[old_name] = new_name
-        except Exception as err:
-            report[old_name] = str(err)
 
     return report
 

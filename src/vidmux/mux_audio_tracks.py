@@ -61,4 +61,5 @@ def mux_audio_tracks(output_file: Path, inputs: list, dry_run: bool = False) -> 
     print(" ".join(shlex.quote(part) for part in command))
 
     if not dry_run:
-        subprocess.run(command, check=True)
+        # Safe: shell=False. Accepts arbitrary input by design
+        subprocess.run(command, check=True)  # noqa: S603

@@ -76,4 +76,6 @@ def set_languages(
     print(" ".join(shlex.quote(part) for part in command))
 
     if not dry_run:
-        subprocess.run(command, check=False)
+        # TODO: should check be True instead?
+        # Safe: shell=False. Accepts arbitrary input by design
+        subprocess.run(command, check=False)  # noqa: S603

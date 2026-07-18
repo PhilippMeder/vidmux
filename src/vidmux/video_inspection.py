@@ -42,7 +42,8 @@ def get_file_info(
 
     # Run ffprobe
     # TODO: Better error handling
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    # Safe: shell=False. Accepts arbitrary media paths/URLs by design
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
     try:
         info = json.loads(result.stdout)
     except json.JSONDecodeError:
@@ -125,7 +126,8 @@ def get_video_resolution(path_or_url: str | Path) -> tuple[int, int] | None:
         str(path_or_url),
     ]
     try:
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode().strip()
+        # Safe: shell=False. Accepting arbitrary file paths and URLs is the intended API
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode().strip()  # noqa: S603
         width, height = output.split("x")
         return int(width), int(height)
     except subprocess.CalledProcessError as err:
