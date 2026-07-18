@@ -11,14 +11,14 @@ from vidmux.video_inspection import (
 )
 
 
-def select_main_video_track(video_tracks: list) -> list:
+def select_main_video_track(video_tracks: list) -> dict:
     """
     Return the main video track.
 
     From all tracks, the track with highest resolution (width*height) is selected.
     """
     if not video_tracks:
-        return None
+        return {}
 
     main_track = max(
         video_tracks, key=lambda track: track.get("width", 0) * track.get("height", 0)
