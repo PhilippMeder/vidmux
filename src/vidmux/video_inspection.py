@@ -5,6 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from vidmux.output import Output
+
 
 def get_file_info(
     file_path: Path, stream_type: str | None = "all", include_format: bool = True
@@ -84,7 +86,7 @@ def group_streams_by_types(streams: list[dict]) -> dict[str, list]:
             case "video":
                 grouped_streams["video"].append(stream)
             case _:
-                print(f"Unkown {stream_type=}")
+                print(f"Unkown {stream_type=}")  # TODO: Change
 
     return grouped_streams
 
@@ -111,7 +113,9 @@ def get_video_tracks(file_path: Path) -> list:
     return get_streams(file_path, "v")
 
 
-def get_video_resolution(path_or_url: str | Path) -> tuple[int, int] | None:
+def get_video_resolution(
+    path_or_url: str | Path, *, output: Output
+) -> tuple[int, int] | None:
     """Get the video resolution for a file or URL."""
     cmd = [
         "ffprobe",
@@ -127,9 +131,9 @@ def get_video_resolution(path_or_url: str | Path) -> tuple[int, int] | None:
     ]
     try:
         # Safe: shell=False. Accepting arbitrary file paths and URLs is the intended API
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode().strip()  # noqa: S603
-        width, height = output.split("x")
+        result = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode().strip()  # noqa: S603
+        width, height = result.split("x")
         return int(width), int(height)
     except subprocess.CalledProcessError as err:
-        print("ffprobe error:", err.output.decode())
+        output.error(f"ffprobe error: {err.output.decode()}")
         return None

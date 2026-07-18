@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from vidmux.output import Output
 from vidmux.video_inspection import get_audio_tracks, get_subtitles
 
 
@@ -39,6 +40,8 @@ def set_languages(
     output_file: Path,
     audio_languages: list[str],
     subtitle_languages: list[str],
+    *,
+    output: Output,
     audio_titles: list[str] | None = None,
     subtitle_titles: list[str] | None = None,
     dry_run: bool = False,
@@ -52,7 +55,7 @@ def set_languages(
             f"Error: Number of audio languages ({len(audio_languages)}) does not match "
             f"number of audio tracks ({len(audio_streams)})."
         )
-        print(msg, file=sys.stderr)
+        output.error(msg)
         sys.exit(1)
 
     if subtitle_languages and len(subtitle_languages) != len(subtitle_streams):
@@ -60,7 +63,7 @@ def set_languages(
             f"Error: Number of subtitle languages ({len(subtitle_languages)}) does not "
             f"match number of subtitle tracks ({len(subtitle_streams)})."
         )
-        print(msg, file=sys.stderr)
+        output.error(msg)
         sys.exit(1)
 
     command = build_ffmpeg_language_command(
@@ -72,10 +75,11 @@ def set_languages(
         subtitle_titles,
     )
 
-    print("FFmpeg command:")
-    print(" ".join(shlex.quote(part) for part in command))
+    output.command(" ".join(shlex.quote(part) for part in command))
 
     if not dry_run:
         # TODO: should check be True instead?
         # Safe: shell=False. Accepts arbitrary input by design
         subprocess.run(command, check=False)  # noqa: S603
+
+    output.success(f"Set languages and wrote output to '{output_file}'")

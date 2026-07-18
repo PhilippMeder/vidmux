@@ -1,12 +1,13 @@
 """Configuration and fixtures for pytest."""
 
 from collections.abc import Generator
-from typing import Any
-from unittest.mock import patch
+from typing import Any, cast
+from unittest.mock import create_autospec, patch
 
 import pytest
 
 from vidmux.media import CanonicalName, Episode, Movie
+from vidmux.output import Output
 
 
 class FfmpegMock:
@@ -288,3 +289,9 @@ def movie_test_data(request) -> Generator[dict]:
 def episode_test_data(request) -> Generator[dict]:
     """Provide test data for episode filename parsing and creation."""
     yield request.param
+
+
+@pytest.fixture
+def mock_output() -> Output:
+    """Return a mock instance of Output."""
+    return cast(Output, create_autospec(Output, instance=True))

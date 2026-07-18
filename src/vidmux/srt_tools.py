@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+from vidmux.output import Output
+
 # Regex for SRT timestamps: allows H or HH, allows "," or "." for ms
 TIMESTAMP_RE = re.compile(
     r"(\d{1,2}):([0-5]\d):([0-5]\d)[\.,](\d{1,3})\s*-->\s*"
@@ -60,6 +62,8 @@ def process_text(text: str, shift_seconds: float) -> tuple[str, int]:
 def process_file(
     input_file: str | Path,
     shift_seconds: float,
+    *,
+    output: Output,
     inplace: bool = True,
     output_file: str | Path | None = None,
     show_count: bool = True,
@@ -68,6 +72,7 @@ def process_file(
     input_file = Path(input_file)
     if not input_file.exists():
         msg = f"'{input_file}' does not exist!"
+        output.error(msg)
         raise FileNotFoundError(msg)
 
     text = input_file.read_text(encoding="utf-8-sig")  # Read UTF-8 (+ potential BOM)
@@ -82,7 +87,7 @@ def process_file(
         output_file.write_text(new_text, encoding="utf-8")
         # Show number of changes
         if show_count:
-            print(
+            output.success(
                 f"Wrote {output_file} (backup: {backup_file}), "
                 f"changed timestamps: {count}"
             )
@@ -93,10 +98,10 @@ def process_file(
         output_file.write_text(new_text, encoding="utf-8")
         # Show number of changes
         if show_count:
-            print(f"Wrote {output_file}, changed timestamps: {count}")
+            output.success(f"Wrote {output_file}, changed timestamps: {count}")
     else:
         # No outfile -> stdout
-        print(new_text)
+        output.success(new_text)
         # Show number of changes
         if show_count:
-            print(f"\nChanged timestamps: {count}")
+            output.success(f"\nChanged timestamps: {count}")

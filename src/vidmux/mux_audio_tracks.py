@@ -5,11 +5,17 @@ import subprocess
 import sys
 from pathlib import Path
 
+from vidmux.output import Output
 
-def mux_audio_tracks(output_file: Path, inputs: list, dry_run: bool = False) -> None:
+
+def mux_audio_tracks(
+    output_file: Path, inputs: list, *, output: Output, dry_run: bool = False
+) -> None:
     """Execute the 'mux-audio-tracks' command using FFmpeg."""
     if len(inputs) < 2:
-        sys.exit("Error: Need at least one input file and language code.")
+        msg = "Need at least one input file and language code."
+        output.error(msg)
+        sys.exit(1)
 
     input_args = []
     map_args = []
@@ -19,7 +25,9 @@ def mux_audio_tracks(output_file: Path, inputs: list, dry_run: bool = False) -> 
     input_idx = 0
     while input_idx < len(inputs):
         if input_idx + 1 >= len(inputs):
-            sys.exit("Error: Each input requires at least a file and language code.")
+            msg = "Each input requires at least a file and language code"
+            output.error(msg)
+            sys.exit(1)
 
         input_file = str(inputs[input_idx])
         lang = inputs[input_idx + 1]
@@ -57,9 +65,10 @@ def mux_audio_tracks(output_file: Path, inputs: list, dry_run: bool = False) -> 
         str(output_file),
     ]
 
-    print("FFmpeg command:")
-    print(" ".join(shlex.quote(part) for part in command))
+    output.command(" ".join(shlex.quote(part) for part in command))
 
     if not dry_run:
         # Safe: shell=False. Accepts arbitrary input by design
         subprocess.run(command, check=True)  # noqa: S603
+
+    output.success(f"Muxed audio tracks and wrote output to '{output_file}'")

@@ -8,6 +8,7 @@ from vidmux import srt_tools
 from vidmux.language_tools import set_languages
 from vidmux.library_structure import scan_library_structure
 from vidmux.mux_audio_tracks import mux_audio_tracks
+from vidmux.output import CliOutput, Verbosity
 from vidmux.renaming import rename_mode
 from vidmux.video_inspection import get_video_resolution
 from vidmux.video_library_scan import scan_mode
@@ -476,6 +477,35 @@ def get_srt_tool_parser(
     return parser
 
 
+def resolve_verbosity(args: argparse.Namespace) -> Verbosity:
+    """Resolve the verbosity information given by the user."""
+    if args.quiet:
+        return Verbosity.QUIET
+
+    if args.debug:
+        return Verbosity.DEBUG
+
+    if args.verbose >= 2:
+        return Verbosity.DEBUG
+
+    if args.verbose == 1:
+        return Verbosity.VERBOSE
+
+    return Verbosity.NORMAL
+
+
+def configure_output(args: argparse.Namespace) -> CliOutput:
+    """Configure the CLI output."""
+    verbosity = resolve_verbosity(args)
+
+    try:
+        dry_run: bool = args.dry_run
+    except AttributeError:
+        dry_run = False
+
+    return CliOutput(verbosity=verbosity, dry_run=dry_run)
+
+
 def main() -> None:
     """Run main CLI programm."""
     formatter_class = argparse.ArgumentDefaultsHelpFormatter
@@ -484,6 +514,8 @@ def main() -> None:
         description="Inspect and modify video/audio/subtitle tracks using FFmpeg.",
         formatter_class=formatter_class,
     )
+
+    # Add feature subparsers
     subparsers = parser.add_subparsers(dest="feature")
 
     feature_parsers = (
@@ -498,39 +530,70 @@ def main() -> None:
     for feature_parser in feature_parsers:
         feature_parser(subparsers, formatter_class=formatter_class)
 
+    # Add general flags
     parser.add_argument(
         "-V",
         "--version",
         action="store_true",
         help="Show vidmux version and exit.",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase output verbosity.",
+    )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress non-error output.",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug output.",
+    )
 
+    # Parse arguments and run logic
     args = parser.parse_args()
 
     if args.version:
         vidmux_version = version("vidmux")
         parser.exit(message=f"vidmux {vidmux_version}\n")
 
+    output = configure_output(args)
+
     match args.feature:
         case "lib-structure":
             scan_library_structure(
                 args.library,
                 args.extensions,
+                output=output,
                 show=args.show,
                 json_file=args.json,
                 csv_file=args.csv,
             )
         case "mux-audio-tracks":
-            mux_audio_tracks(args.output, args.inputs, dry_run=args.dry_run)
+            mux_audio_tracks(
+                args.output, args.inputs, output=output, dry_run=args.dry_run
+            )
         case "rename":
             rename_mode(args.file, backup=not args.no_backup)
         case "resolution":
-            resolution = get_video_resolution(args.path_or_url)
-            print(f"Video resolution of '{args.path_or_url}':\n{resolution}")
+            resolution = get_video_resolution(args.path_or_url, output=output)
+            if resolution is not None:
+                output.success(
+                    f"Video resolution of '{args.path_or_url}':\n{resolution}"
+                )
+            else:
+                output.warning(f"Could not get resolution of '{args.path_or_url}'")
         case "scan":
             scan_mode(
                 args.library,
                 args.extensions,
+                output=output,
                 show=args.show,
                 json_file=args.json,
                 csv_file=args.csv,
@@ -543,6 +606,7 @@ def main() -> None:
                 output_file=args.output_file,
                 audio_languages=args.audio_lang,
                 subtitle_languages=args.subtitle_lang,
+                output=output,
                 audio_titles=args.audio_title,
                 subtitle_titles=args.subtitle_title,
                 dry_run=args.dry_run,
@@ -551,6 +615,7 @@ def main() -> None:
             srt_tools.process_file(
                 args.input_file,
                 args.shift,
+                output=output,
                 inplace=args.inplace,
                 output_file=args.output_file,
                 show_count=args.show_count,

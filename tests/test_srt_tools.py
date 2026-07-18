@@ -1,8 +1,11 @@
 """Tests for srt_tools."""
 
+from pathlib import Path
+
 import pytest
 
 from vidmux import srt_tools
+from vidmux.output import Output
 
 TEST_DATA = [
     # Values: pytest.param(input_text, shift_seconds, target_text, change_count)
@@ -64,26 +67,35 @@ def test_text_processing(
     assert count == expected_count
 
 
-def test_process_file_missing_file(tmp_path) -> None:
+def test_process_file_missing_file(tmp_path: Path, mock_output: Output) -> None:
     """Test process_file raises FileNotFoundError if file is missing."""
     missing = tmp_path / "no_file.txt"
 
     with pytest.raises(FileNotFoundError):
-        srt_tools.process_file(missing, shift_seconds=10)
+        srt_tools.process_file(missing, shift_seconds=10, output=mock_output)
 
 
 @pytest.mark.parametrize(
     "input_text, shift_seconds, expected_text, _expected_count", TEST_DATA
 )
 def test_process_file_inplace(
-    tmp_path, input_text, shift_seconds, expected_text, _expected_count
+    tmp_path: Path,
+    mock_output: Output,
+    input_text,
+    shift_seconds,
+    expected_text,
+    _expected_count,
 ) -> None:
     """Test process_file inplace mode."""
     file = tmp_path / "input.txt"
     file.write_text(input_text, encoding="utf-8")
 
     srt_tools.process_file(
-        file, shift_seconds=shift_seconds, inplace=True, show_count=False
+        file,
+        shift_seconds=shift_seconds,
+        output=mock_output,
+        inplace=True,
+        show_count=False,
     )
 
     # original file overwritten
@@ -99,7 +111,12 @@ def test_process_file_inplace(
     "input_text, shift_seconds, expected_text, _expected_count", TEST_DATA
 )
 def test_process_file_output_file(
-    tmp_path, input_text, shift_seconds, expected_text, _expected_count
+    tmp_path: Path,
+    mock_output: Output,
+    input_text,
+    shift_seconds,
+    expected_text,
+    _expected_count,
 ) -> None:
     """Test process_file normal mode."""
     input_file = tmp_path / "input.srt"
@@ -110,6 +127,7 @@ def test_process_file_output_file(
     srt_tools.process_file(
         input_file,
         shift_seconds=shift_seconds,
+        output=mock_output,
         inplace=False,
         output_file=output_file,
         show_count=False,
@@ -123,7 +141,12 @@ def test_process_file_output_file(
     "input_text, shift_seconds, expected_text, _expected_count", TEST_DATA
 )
 def test_process_file_stdout(
-    tmp_path, capsys, input_text, shift_seconds, expected_text, _expected_count
+    tmp_path: Path,
+    mock_output: Output,
+    input_text,
+    shift_seconds,
+    expected_text,
+    _expected_count,
 ) -> None:
     """Test process_file dry run mode."""
     file = tmp_path / "input.srt"
@@ -132,14 +155,15 @@ def test_process_file_stdout(
     srt_tools.process_file(
         file,
         shift_seconds=shift_seconds,
+        output=mock_output,
         inplace=False,
         output_file=None,
         show_count=False,
     )
 
-    out = capsys.readouterr().out
-
-    assert expected_text in out
+    mock_output.success.assert_called()
+    calls = [call.args[0] for call in mock_output.success.call_args_list]
+    assert any(expected_text in text for text in calls)
 
 
 MODES = [
@@ -163,8 +187,8 @@ MODES = [
 )
 @pytest.mark.parametrize("mode_kwargs", MODES)
 def test_process_file_show_count(
-    tmp_path,
-    capsys,
+    tmp_path: Path,
+    mock_output: Output,
     input_text,
     shift_seconds,
     _expected_text,
@@ -179,9 +203,15 @@ def test_process_file_show_count(
         mode_kwargs["output_file"] = tmp_path / mode_kwargs["output_file"]
 
     srt_tools.process_file(
-        file, shift_seconds=shift_seconds, show_count=True, **mode_kwargs
+        file,
+        shift_seconds=shift_seconds,
+        output=mock_output,
+        show_count=True,
+        **mode_kwargs,
     )
 
-    out = capsys.readouterr().out.lower()
+    expected_text = f"changed timestamps: {expected_count}"
 
-    assert f"changed timestamps: {expected_count}" in out
+    mock_output.success.assert_called()
+    calls = [call.args[0] for call in mock_output.success.call_args_list]
+    assert any(expected_text in text.lower() for text in calls)

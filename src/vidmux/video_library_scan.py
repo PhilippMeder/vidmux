@@ -1,10 +1,12 @@
 """Tools to scan a video library."""
 
 import csv
+from collections.abc import Callable
 from pathlib import Path
 
 from vidmux.filesystem import JSONFile, JSONTypes
 from vidmux.media import get_canonical_name, get_media_from_filename
+from vidmux.output import Output
 from vidmux.video_inspection import (
     get_file_info,
     group_streams_by_types,
@@ -104,8 +106,6 @@ def suggest_name(report: dict, undefined_language: str = "??") -> str:
     media_object = get_media_from_filename(filename)
     canonical_name = get_canonical_name(media_object, additional_tags=tags)
 
-    print(filename, media_object, canonical_name)
-
     new_filename = f"{canonical_name.filename}{extension}"
 
     # Check whether a subfolder has to be created
@@ -146,7 +146,7 @@ def make_track_entries(tracks: list) -> list:
 
 
 def show_track_entries(
-    tracks: list, name: str = "track", output: callable = print
+    tracks: list, name: str = "track", output: Callable = print
 ) -> None:
     """Show tracks."""
     for track in tracks:
@@ -158,7 +158,7 @@ def show_track_entries(
 
 
 def scan_video_library(
-    library_path: Path, extensions: list[str] | None = None
+    library_path: Path, extensions: list[str] | None = None, *, output: Output
 ) -> list[dict]:
     """Scan all videos in 'library_path' recursively."""
     if extensions is None:
@@ -169,7 +169,7 @@ def scan_video_library(
         for filename in files:
             file = root / filename
             if file.suffix in extensions:
-                print(f"Inspecting '{filename}'...")
+                output.info(f"Inspecting '{filename}'...")
 
                 info = get_file_info(file, stream_type="all", include_format=True)
                 tracks = group_streams_by_types(info.get("streams", []))
@@ -220,20 +220,24 @@ def save_csv(results: list[dict], path: Path) -> None:
                     ]
                 )
 
-    print(f"Save CSV: {path}")
 
-
-def print_to_terminal(results: list[dict]) -> None:
+def print_to_terminal(results: list[dict], output_func: Callable = print) -> None:
     """Print results to terminal."""
     for entry in results:
-        print(entry["filename"])
-        show_track_entries(entry["audio_tracks"], name="audio track")
-        show_track_entries(entry["subtitle_tracks"], name="subtitle track")
+        output_func(entry["filename"])
+        show_track_entries(
+            entry["audio_tracks"], name="audio track", output=output_func
+        )
+        show_track_entries(
+            entry["subtitle_tracks"], name="subtitle track", output=output_func
+        )
 
 
 def scan_mode(
     library: Path,
     extensions: list[str],
+    *,
+    output: Output,
     show: bool = True,
     json_file: Path | None = None,
     csv_file: Path | None = None,
@@ -242,22 +246,24 @@ def scan_mode(
 ) -> bool:
     """Run the scan and save/show the output."""
     if not (show or json_file or csv_file):
-        print("No output specified. Use --print, --json or --csv.")
+        output.error("No output specified. Use --print, --json or --csv.")
         return False
 
-    scan_result = scan_video_library(library, extensions=extensions)
+    scan_result = scan_video_library(library, extensions=extensions, output=output)
 
     if show:
-        print_to_terminal(scan_result)
+        print_to_terminal(scan_result, output_func=output.info)
 
     if json_file:
         outfile = JSONFile(
             library.resolve(), scan_result, file_type=JSONTypes.SCAN_REPORT
         )
         outfile.save(json_file)
+        output.info(f"Saved results to JSON: {json_file}")
 
     if csv_file:
         save_csv(scan_result, csv_file)
+        output.info(f"Saved results to CSV: {csv_file}")
 
     if name_file:
         name_suggestions = {}
@@ -270,5 +276,6 @@ def scan_mode(
             library.resolve(), name_suggestions, file_type=JSONTypes.RENAMING_MAPPING
         )
         outfile.save(name_file)
+        output.info(f"Saved rename suggestions to JSON: {json_file}")
 
     return True

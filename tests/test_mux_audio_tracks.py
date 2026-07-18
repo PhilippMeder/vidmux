@@ -6,16 +6,17 @@ from unittest.mock import patch
 import pytest
 
 from vidmux.mux_audio_tracks import mux_audio_tracks
+from vidmux.output import Output
 
 
-def test_mux_fails_with_missing_args(tmp_path: Path) -> None:
+def test_mux_fails_with_missing_args(tmp_path: Path, mock_output: Output) -> None:
     """Test failing on purpose."""
     outfile = tmp_path / "out.mp4"
     with pytest.raises(SystemExit):
-        mux_audio_tracks(outfile, ["only_one_arg"])
+        mux_audio_tracks(outfile, ["only_one_arg"], output=mock_output)
 
 
-def test_mux_command(tmp_path: Path) -> None:
+def test_mux_command(tmp_path: Path, mock_output: Output) -> None:
     """Test whether the mux command is constructed correctly without running ffmpeg."""
     outfile = tmp_path / "outfile.mp4"
 
@@ -40,6 +41,7 @@ def test_mux_command(tmp_path: Path) -> None:
                 infile_3,
                 "eng",
             ],
+            output=mock_output,
         )
 
     # Extract the command that would have been run
@@ -89,7 +91,9 @@ def test_mux_command(tmp_path: Path) -> None:
     mock_run.assert_called_once_with(expected_args, check=True)
 
 
-def test_mux_command_with_fixture(tmp_path: Path, ffmpeg_mock) -> None:
+def test_mux_command_with_fixture(
+    tmp_path: Path, mock_output: Output, ffmpeg_mock
+) -> None:
     """Test whether the mux command is constructed correctly without running ffmpeg."""
     outfile = tmp_path / "outfile.mp4"
 
@@ -112,6 +116,7 @@ def test_mux_command_with_fixture(tmp_path: Path, ffmpeg_mock) -> None:
             infile_3,
             "eng",
         ],
+        output=mock_output,
     )
 
     # Define expected ffmpeg arguments
@@ -159,13 +164,17 @@ def test_mux_command_with_fixture(tmp_path: Path, ffmpeg_mock) -> None:
         ["a.mp4", "eng", "English", "b.mp4", "deu", "Deutsch"],
     ],
 )
-def test_mux_argument_patterns(tmp_path: Path, inputs: list[str]) -> None:
+def test_mux_argument_patterns(
+    tmp_path: Path, mock_output: Output, inputs: list[str]
+) -> None:
     """Test multiple argument patterns."""
     outfile = tmp_path / "out.mp4"
     for name in inputs[::3]:
         (tmp_path / name).touch()
     with patch("subprocess.run") as mock_run:
         mux_audio_tracks(
-            outfile, [tmp_path / x if x.endswith(".mp4") else x for x in inputs]
+            outfile,
+            [tmp_path / x if x.endswith(".mp4") else x for x in inputs],
+            output=mock_output,
         )
     mock_run.assert_called_once()
