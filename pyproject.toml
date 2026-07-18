@@ -1,6 +1,6 @@
 [project]
 name = "vidmux"
-version = "0.2.1"
+version = "0.2.2"
 description = "Inspect and modify video/audio/subtitle tracks using FFmpeg."
 readme = "README.md"
 requires-python = ">=3.10"
